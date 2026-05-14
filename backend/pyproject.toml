@@ -1,0 +1,18 @@
+[project]
+name = "sudoku-backend"
+version = "0.1.0"
+description = "Backend for variant sudoku builder"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "sqlmodel>=0.0.21",
+    "pydantic>=2.7",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
