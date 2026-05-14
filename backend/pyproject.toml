@@ -8,6 +8,7 @@ dependencies = [
     "uvicorn[standard]>=0.30",
     "sqlmodel>=0.0.21",
     "pydantic>=2.7",
+    "aiofiles>=23.0",
 ]
 
 [build-system]

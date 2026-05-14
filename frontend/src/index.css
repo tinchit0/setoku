@@ -9,22 +9,14 @@
   --accent-2: #ffb86b;
   --danger: #ff6b81;
   --ok: #6bd9a8;
-  --cell: #f5f5f5;
-  --cell-text: #1a1d24;
-  --cell-given: #1a1d24;
-  --cell-user: #2a4ad0;
-  --cell-selected: #ffe7a1;
-  --cell-related: #e8f0ff;
-  --cell-conflict: #ffd0d6;
 }
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
-html,
-body,
-#root {
+html, body, #root {
   height: 100%;
   margin: 0;
 }
@@ -33,6 +25,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
   color: var(--text);
+  overflow-x: hidden;
 }
 
 button {
@@ -44,24 +37,20 @@ button {
   background: var(--surface-2);
   color: var(--text);
   cursor: pointer;
+  touch-action: manipulation;
   transition: background 0.1s, border-color 0.1s;
+  user-select: none;
 }
-button:hover {
-  background: var(--border);
-}
-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+button:hover { background: var(--border); }
+button:active { opacity: 0.75; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
 button.primary {
   background: var(--accent);
   color: #0f1115;
   border-color: var(--accent);
   font-weight: 600;
 }
-button.primary:hover {
-  filter: brightness(1.1);
-}
+button.primary:hover { filter: brightness(1.1); }
 button.danger {
   background: transparent;
   border-color: var(--danger);
@@ -73,9 +62,7 @@ button.active {
   border-color: var(--accent);
 }
 
-input,
-textarea,
-select {
+input, textarea, select {
   font-family: inherit;
   font-size: 14px;
   padding: 6px 10px;
@@ -83,15 +70,18 @@ select {
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
+  min-width: 0;
 }
+
+/* ── Layout ─────────────────────────────────────────── */
 
 .app {
   display: grid;
   grid-template-columns: 1fr 360px;
   grid-template-rows: auto 1fr;
   height: 100vh;
-  gap: 16px;
-  padding: 16px;
+  gap: 12px;
+  padding: 12px;
 }
 
 .topbar {
@@ -99,12 +89,14 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .topbar h1 {
-  font-size: 18px;
+  font-size: 16px;
   margin: 0;
+  white-space: nowrap;
 }
 
 .topbar .mode-switch {
@@ -114,13 +106,14 @@ select {
   padding: 4px;
   border-radius: 8px;
   border: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .topbar .mode-switch button {
   border: none;
   background: transparent;
+  padding: 6px 14px;
 }
-
 .topbar .mode-switch button.active {
   background: var(--accent);
   color: #0f1115;
@@ -129,30 +122,40 @@ select {
 .board-area {
   display: flex;
   flex-direction: column;
-  gap: 16px;
   align-items: center;
   justify-content: flex-start;
   overflow: auto;
+  gap: 12px;
+}
+
+.board-area svg {
+  width: 100%;
+  max-width: 540px;
+  height: auto;
+  display: block;
+  touch-action: none;
 }
 
 .sidebar {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 16px;
+  padding: 14px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .sidebar h2 {
-  font-size: 14px;
+  font-size: 13px;
   margin: 0;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+/* ── Tool grid ───────────────────────────────────────── */
 
 .tool-grid {
   display: grid;
@@ -163,14 +166,16 @@ select {
 .tool-grid button {
   text-align: left;
   font-size: 13px;
-  padding: 8px 10px;
+  padding: 10px;
 }
+
+/* ── Constraint list ─────────────────────────────────── */
 
 .constraint-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 240px;
+  max-height: 220px;
   overflow-y: auto;
 }
 
@@ -183,6 +188,7 @@ select {
   border-radius: 6px;
   border: 1px solid var(--border);
   font-size: 13px;
+  gap: 8px;
 }
 
 .constraint-row .meta {
@@ -191,22 +197,28 @@ select {
 }
 
 .constraint-row button {
-  padding: 2px 8px;
+  padding: 4px 10px;
   font-size: 12px;
+  flex-shrink: 0;
 }
+
+/* ── Digit pad ───────────────────────────────────────── */
 
 .digit-pad {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
-  max-width: 360px;
+  width: 100%;
 }
 
 .digit-pad button {
   aspect-ratio: 1;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
+  padding: 0;
 }
+
+/* ── Status panel ────────────────────────────────────── */
 
 .status-panel {
   display: flex;
@@ -231,10 +243,12 @@ select {
   border-radius: 10px;
   font-weight: 600;
 }
-.status-panel .status-tag.ok { background: rgba(107, 217, 168, 0.15); color: var(--ok); }
-.status-panel .status-tag.warn { background: rgba(255, 184, 107, 0.15); color: var(--accent-2); }
-.status-panel .status-tag.err { background: rgba(255, 107, 129, 0.15); color: var(--danger); }
-.status-panel .status-tag.dim { background: rgba(154, 161, 176, 0.15); color: var(--text-dim); }
+.status-panel .status-tag.ok   { background: rgba(107,217,168,.15); color: var(--ok); }
+.status-panel .status-tag.warn { background: rgba(255,184,107,.15); color: var(--accent-2); }
+.status-panel .status-tag.err  { background: rgba(255,107,129,.15); color: var(--danger); }
+.status-panel .status-tag.dim  { background: rgba(154,161,176,.15); color: var(--text-dim); }
+
+/* ── Misc ────────────────────────────────────────────── */
 
 .toolbar-row {
   display: flex;
@@ -253,6 +267,88 @@ select {
   color: var(--text-dim);
 }
 
-.cage-sum-input {
-  width: 80px;
+.cage-sum-input { width: 80px; }
+
+kbd {
+  font-family: monospace;
+  font-size: 11px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+/* ── Save/load bar ───────────────────────────────────── */
+
+.save-load-bar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.save-load-bar input  { flex: 1 1 120px; min-width: 80px; }
+.save-load-bar select { flex: 1 1 100px; min-width: 80px; }
+
+/* ── Mobile ──────────────────────────────────────────── */
+
+@media (max-width: 700px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    height: auto;
+    min-height: 100svh;
+    padding: 8px;
+    gap: 8px;
+    overflow-y: auto;
+  }
+
+  .topbar {
+    gap: 6px;
+  }
+
+  .topbar h1 {
+    font-size: 14px;
+    flex: 1;
+  }
+
+  .board-area {
+    overflow: visible;
+  }
+
+  .sidebar {
+    border-radius: 8px;
+    padding: 12px;
+    /* no max-height on mobile — let it grow */
+    overflow-y: visible;
+  }
+
+  .constraint-list {
+    max-height: none;
+  }
+
+  .tool-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .tool-grid button {
+    font-size: 12px;
+    padding: 10px 4px;
+    text-align: center;
+  }
+
+  .digit-pad {
+    gap: 8px;
+  }
+
+  .digit-pad button {
+    font-size: 22px;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 400px) {
+  .tool-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

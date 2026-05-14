@@ -38,34 +38,37 @@ export default function App() {
     };
   }, [constraints, setSolveStatus]);
 
-  const solutionGrid = useMemo(
-    () => (solveStatus.state === "unique" ? solveStatus.solution : undefined),
-    [solveStatus],
-  );
+  const solutionGrid = useMemo(() => {
+    if (solveStatus.state === "unique") return solveStatus.solution;
+    if (solveStatus.state === "multiple") return solveStatus.solutions[0];
+    return undefined;
+  }, [solveStatus]);
 
   return (
     <div className="app">
       <div className="topbar">
-        <h1>Variant Sudoku Builder</h1>
-        <div className="mode-switch">
-          <button
-            className={mode === "build" ? "active" : ""}
-            onClick={() => setMode("build")}
-          >
-            Constructor
-          </button>
-          <button
-            className={mode === "play" ? "active" : ""}
-            onClick={() => setMode("play")}
-            disabled={solveStatus.state !== "unique"}
-            title={
-              solveStatus.state !== "unique"
-                ? "Necesita una solución única para jugar"
-                : "Jugar el puzzle"
-            }
-          >
-            Jugar
-          </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
+          <h1>Sudoku</h1>
+          <div className="mode-switch">
+            <button
+              className={mode === "build" ? "active" : ""}
+              onClick={() => setMode("build")}
+            >
+              Constructor
+            </button>
+            <button
+              className={mode === "play" ? "active" : ""}
+              onClick={() => setMode("play")}
+              disabled={solveStatus.state !== "unique"}
+              title={
+                solveStatus.state !== "unique"
+                  ? "Necesita una solución única para jugar"
+                  : "Jugar el puzzle"
+              }
+            >
+              Jugar
+            </button>
+          </div>
         </div>
         <SaveLoadBar />
       </div>

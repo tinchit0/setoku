@@ -32,7 +32,9 @@ export function SudokuGrid({ solutionGrid }: Props) {
   const selectCell = useStore((s) => s.selectCell);
   const clearSelection = useStore((s) => s.clearSelection);
   const setEntry = useStore((s) => s.setEntry);
-  const togglePencilMark = useStore((s) => s.togglePencilMark);
+  const toggleCornerMark = useStore((s) => s.toggleCornerMark);
+  const toggleCenterMark = useStore((s) => s.toggleCenterMark);
+  const pencilMode = useStore((s) => s.pencilMode);
 
   const [dragging, setDragging] = useState(false);
   const dragAdditive = useRef(false);
@@ -120,8 +122,16 @@ export function SudokuGrid({ solutionGrid }: Props) {
             });
           }
         } else if (mode === "play") {
-          if (e.shiftKey) {
-            for (const pos of selected) togglePencilMark(pos, digit);
+          const wantCorner = e.ctrlKey || e.metaKey;
+          const wantCenter = e.shiftKey;
+          if (wantCorner) {
+            for (const pos of selected) toggleCornerMark(pos, digit);
+          } else if (wantCenter) {
+            for (const pos of selected) toggleCenterMark(pos, digit);
+          } else if (pencilMode === "corner") {
+            for (const pos of selected) toggleCornerMark(pos, digit);
+          } else if (pencilMode === "center") {
+            for (const pos of selected) toggleCenterMark(pos, digit);
           } else {
             for (const pos of selected) setEntry(pos, digit);
           }
@@ -147,13 +157,18 @@ export function SudokuGrid({ solutionGrid }: Props) {
       if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
         e.preventDefault();
         const cur = selected[selected.length - 1];
+        if (!cur) return;
         let nr = cur.r;
         let nc = cur.c;
-        if (e.key === "ArrowUp") nr = (cur.r + 8) % 9;
-        if (e.key === "ArrowDown") nr = (cur.r + 1) % 9;
-        if (e.key === "ArrowLeft") nc = (cur.c + 8) % 9;
-        if (e.key === "ArrowRight") nc = (cur.c + 1) % 9;
-        toggleCellSelection({ r: nr, c: nc }, false);
+        if (e.key === "ArrowUp") nr = Math.max(0, cur.r - 1);
+        if (e.key === "ArrowDown") nr = Math.min(8, cur.r + 1);
+        if (e.key === "ArrowLeft") nc = Math.max(0, cur.c - 1);
+        if (e.key === "ArrowRight") nc = Math.min(8, cur.c + 1);
+        if (e.ctrlKey || e.metaKey) {
+          selectCell({ r: nr, c: nc });
+        } else {
+          toggleCellSelection({ r: nr, c: nc }, false);
+        }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -163,14 +178,16 @@ export function SudokuGrid({ solutionGrid }: Props) {
     mode,
     tool,
     constraints,
-    togglePencilMark,
+    toggleCornerMark,
+    toggleCenterMark,
+    pencilMode,
     setEntry,
     clearSelection,
     toggleCellSelection,
   ]);
 
   return (
-    <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ userSelect: "none" }}>
+    <svg viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ userSelect: "none" }}>
       {/* Background */}
       <rect x={0} y={0} width={SIZE} height={SIZE} fill="#0f1115" />
 
@@ -178,11 +195,7 @@ export function SudokuGrid({ solutionGrid }: Props) {
       {Array.from({ length: N }).map((_, r) =>
         Array.from({ length: N }).map((_, c) => {
           const { x, y } = cellTopLeft(r, c);
-          const sel = isSelected(r, c);
           const draftBulb = isDraftBulb(r, c);
-          let fill = "#f5f5f5";
-          if (sel) fill = "#ffe7a1";
-          if (draftBulb) fill = "#ffd87a";
           return (
             <rect
               key={`cell-${r}-${c}`}
@@ -190,7 +203,7 @@ export function SudokuGrid({ solutionGrid }: Props) {
               y={y}
               width={CELL}
               height={CELL}
-              fill={fill}
+              fill={draftBulb ? "#ffd87a" : "#f5f5f5"}
               stroke="#0f1115"
               strokeWidth={1}
               onPointerDown={(e) => onCellPointerDown(e, r, c)}
@@ -200,6 +213,25 @@ export function SudokuGrid({ solutionGrid }: Props) {
           );
         }),
       )}
+
+      {/* Selection highlight */}
+      {selected.map(({ r, c }) => {
+        const { x, y } = cellTopLeft(r, c);
+        return (
+          <rect
+            key={`sel-${r}-${c}`}
+            x={x + 2}
+            y={y + 2}
+            width={CELL - 4}
+            height={CELL - 4}
+            fill="rgba(122,162,255,0.18)"
+            stroke="#7aa2ff"
+            strokeWidth={2.5}
+            rx={2}
+            pointerEvents="none"
+          />
+        );
+      })}
 
       <CageOverlay constraints={constraints} />
       <ParityOverlay constraints={constraints} />
@@ -268,30 +300,47 @@ export function SudokuGrid({ solutionGrid }: Props) {
               </text>
             );
           }
-          if (entry?.pencil && entry.pencil.length) {
-            return (
-              <g key={`p-${r}-${c}`} pointerEvents="none">
-                {entry.pencil.map((d) => {
-                  const px = PAD + c * CELL + ((d - 1) % 3) * (CELL / 3) + CELL / 6;
-                  const py = PAD + r * CELL + Math.floor((d - 1) / 3) * (CELL / 3) + CELL / 6;
-                  return (
-                    <text
-                      key={d}
-                      x={px}
-                      y={py}
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontSize={12}
-                      fill="#5a6378"
-                    >
-                      {d}
-                    </text>
-                  );
-                })}
-              </g>
-            );
-          }
-          return null;
+          const corner = entry?.corner ?? [];
+          const center = entry?.center ?? [];
+          if (corner.length === 0 && center.length === 0) return null;
+          // Corner: digit d → fixed slot d-1 (1=top-left … 9=bot-right)
+          const THIRD = CELL / 3;
+          return (
+            <g key={`p-${r}-${c}`} pointerEvents="none">
+              {corner.map((d) => {
+                const slot = d - 1; // digit-based fixed position
+                const px = PAD + c * CELL + (slot % 3) * THIRD + THIRD / 2;
+                const py = PAD + r * CELL + Math.floor(slot / 3) * THIRD + THIRD / 2;
+                return (
+                  <text
+                    key={`co-${d}`}
+                    x={px}
+                    y={py}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize={11}
+                    fontWeight={500}
+                    fill="#4a5580"
+                  >
+                    {d}
+                  </text>
+                );
+              })}
+              {center.length > 0 && (
+                <text
+                  x={PAD + c * CELL + CELL / 2}
+                  y={PAD + r * CELL + CELL / 2}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={center.length > 5 ? 10 : 13}
+                  fontWeight={600}
+                  fill="#7aa2ff"
+                >
+                  {center.join("")}
+                </text>
+              )}
+            </g>
+          );
         }),
       )}
 

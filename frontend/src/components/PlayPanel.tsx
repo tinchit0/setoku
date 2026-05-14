@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useStore, posKey } from "../state/store";
 
 export function PlayPanel() {
@@ -7,10 +7,11 @@ export function PlayPanel() {
   const constraints = useStore((s) => s.constraints);
   const solveStatus = useStore((s) => s.solveStatus);
   const setEntry = useStore((s) => s.setEntry);
-  const togglePencilMark = useStore((s) => s.togglePencilMark);
+  const toggleCornerMark = useStore((s) => s.toggleCornerMark);
+  const toggleCenterMark = useStore((s) => s.toggleCenterMark);
   const clearAllEntries = useStore((s) => s.clearAllEntries);
-
-  const [pencilMode, setPencilMode] = useState(false);
+  const pencilMode = useStore((s) => s.pencilMode);
+  const setPencilMode = useStore((s) => s.setPencilMode);
 
   const givens = useMemo(
     () => new Set(constraints.filter((c) => c.kind === "given").map((c) => posKey(c.pos))),
@@ -20,7 +21,8 @@ export function PlayPanel() {
   const onDigit = (d: number) => {
     for (const pos of selected) {
       if (givens.has(posKey(pos))) continue;
-      if (pencilMode) togglePencilMark(pos, d);
+      if (pencilMode === "corner") toggleCornerMark(pos, d);
+      else if (pencilMode === "center") toggleCenterMark(pos, d);
       else setEntry(pos, d);
     }
   };
@@ -59,24 +61,32 @@ export function PlayPanel() {
       <div>
         <h2>Modo juego</h2>
         <p style={{ fontSize: 13, color: "var(--text-dim)", margin: "8px 0" }}>
-          Selecciona celdas (clic / flechas) e introduce dígitos. Mayús + dígito o el modo lápiz para
-          notas.
+          Selecciona celdas (clic / flechas) e introduce dígitos. Atajos:
+          <br />· dígito = valor
+          <br />· <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + dígito = marca de esquina
+          <br />· <kbd>Shift</kbd> + dígito = marca central
         </p>
       </div>
 
       <div>
         <div className="toolbar-row" style={{ marginBottom: 8 }}>
           <button
-            className={pencilMode ? "" : "active"}
-            onClick={() => setPencilMode(false)}
+            className={pencilMode === "digit" ? "active" : ""}
+            onClick={() => setPencilMode("digit")}
           >
             Dígito
           </button>
           <button
-            className={pencilMode ? "active" : ""}
-            onClick={() => setPencilMode(true)}
+            className={pencilMode === "corner" ? "active" : ""}
+            onClick={() => setPencilMode("corner")}
           >
-            Lápiz
+            Esquina
+          </button>
+          <button
+            className={pencilMode === "center" ? "active" : ""}
+            onClick={() => setPencilMode("center")}
+          >
+            Centro
           </button>
         </div>
         <div className="digit-pad">

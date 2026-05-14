@@ -14,6 +14,8 @@ export type Tool =
   | { kind: "xv"; mark: "x" | "v" }
   | { kind: "parity"; parity: "even" | "odd" };
 
+export type PencilMode = "digit" | "corner" | "center";
+
 export type State = {
   mode: Mode;
   tool: Tool;
@@ -22,6 +24,7 @@ export type State = {
   entries: Record<string, Entry>;
   solveStatus: SolveStatus;
   showSolution: boolean;
+  pencilMode: PencilMode;
   draft: {
     bulb?: CellPos[];
   };
@@ -42,10 +45,12 @@ export type Actions = {
   commitDraftBulb: () => void;
   resetDraft: () => void;
   setEntry: (pos: CellPos, digit?: number) => void;
-  togglePencilMark: (pos: CellPos, digit: number) => void;
+  toggleCornerMark: (pos: CellPos, digit: number) => void;
+  toggleCenterMark: (pos: CellPos, digit: number) => void;
   clearAllEntries: () => void;
   setSolveStatus: (s: SolveStatus) => void;
   setShowSolution: (v: boolean) => void;
+  setPencilMode: (m: PencilMode) => void;
   loadPuzzle: (constraints: Constraint[]) => void;
   reset: () => void;
 };
@@ -65,6 +70,7 @@ export const useStore = create<State & Actions>((set, get) => ({
   entries: {},
   solveStatus: { state: "idle" },
   showSolution: false,
+  pencilMode: "digit",
   draft: {},
 
   setMode: (mode) => set({ mode, selected: [], tool: { kind: "select" }, draft: {} }),
@@ -128,21 +134,34 @@ export const useStore = create<State & Actions>((set, get) => ({
   setEntry: (pos, digit) => {
     const k = posKey(pos);
     const entries = { ...get().entries };
-    const cur = entries[k] ?? { pencil: [] };
+    const cur = entries[k] ?? { corner: [], center: [] };
     if (digit === undefined) entries[k] = { ...cur, digit: undefined };
-    else entries[k] = { ...cur, digit, pencil: [] };
+    else entries[k] = { ...cur, digit, corner: [], center: [] };
     set({ entries });
   },
 
-  togglePencilMark: (pos, digit) => {
+  toggleCornerMark: (pos, digit) => {
     const k = posKey(pos);
     const entries = { ...get().entries };
-    const cur = entries[k] ?? { pencil: [] };
-    if (cur.digit !== undefined) return; // can't pencil over a digit
-    const has = cur.pencil.includes(digit);
+    const cur = entries[k] ?? { corner: [], center: [] };
+    if (cur.digit !== undefined) return;
+    const has = cur.corner.includes(digit);
     entries[k] = {
       ...cur,
-      pencil: has ? cur.pencil.filter((d) => d !== digit) : [...cur.pencil, digit].sort(),
+      corner: has ? cur.corner.filter((d) => d !== digit) : [...cur.corner, digit].sort(),
+    };
+    set({ entries });
+  },
+
+  toggleCenterMark: (pos, digit) => {
+    const k = posKey(pos);
+    const entries = { ...get().entries };
+    const cur = entries[k] ?? { corner: [], center: [] };
+    if (cur.digit !== undefined) return;
+    const has = cur.center.includes(digit);
+    entries[k] = {
+      ...cur,
+      center: has ? cur.center.filter((d) => d !== digit) : [...cur.center, digit].sort(),
     };
     set({ entries });
   },
@@ -151,6 +170,7 @@ export const useStore = create<State & Actions>((set, get) => ({
 
   setSolveStatus: (s) => set({ solveStatus: s }),
   setShowSolution: (v) => set({ showSolution: v }),
+  setPencilMode: (m) => set({ pencilMode: m }),
 
   loadPuzzle: (constraints) =>
     set({

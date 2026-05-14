@@ -67,17 +67,16 @@ export function SaveLoadBar() {
   };
 
   return (
-    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+    <div className="save-load-bar">
       <input
-        placeholder="Título del puzzle"
+        placeholder="Título"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        style={{ width: 180 }}
       />
       <button onClick={onSave} disabled={busy} className="primary">
-        {currentId !== null ? "Guardar" : "Guardar nuevo"}
+        {currentId !== null ? "💾" : "💾+"}
       </button>
-      <button onClick={onNew}>Nuevo</button>
+      <button onClick={onNew} title="Nuevo puzzle">✚</button>
       <select
         value={currentId ?? ""}
         onChange={(e) => {

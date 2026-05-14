@@ -9,6 +9,28 @@ Aplicación para construir sudokus con restricciones poco habituales (killer cag
 
 ## Cómo correrlo
 
+### Publicar en internet (un solo puerto)
+
+```bash
+# 1. Build + arrancar (todo en uno)
+./serve.sh          # queda en http://localhost:8000
+
+# 2. En otra terminal, túnel con localtunnel:
+npx localtunnel --port 8000
+```
+
+localtunnel te da una URL pública (p.ej. `https://xxxx.loca.lt`). La primera vez que alguien la abra verá una página de aviso de localtunnel — basta con hacer clic en "Click to Continue".
+
+---
+
+### Docker Compose (todo en uno)
+
+```bash
+docker compose up --build
+```
+
+Abre `http://localhost:8080`. Nginx sirve el frontend y hace proxy de `/api/*` al backend. La DB se guarda en el volumen `sudoku-data`.
+
 ### Backend
 
 Recomendado: `uv` (más rápido). Alternativa: `python -m venv` + pip.
@@ -53,7 +75,9 @@ Puedes activar "Mostrar solución (fantasma)" para ver la solución en gris detr
 ### Modo Juego
 
 - **Dígito**: introduce el número en la celda seleccionada.
-- **Lápiz**: introduce candidatos en una esquina (Shift+1-9 desde el teclado funciona en cualquier modo).
+- **Marcas (lápiz)**: dos estilos.
+  - **Esquina** — `Ctrl`/`⌘` + 1-9 o elige "Esquina" en el panel.
+  - **Centro** — `Shift` + 1-9 o elige "Centro" en el panel.
 - Las celdas de **givens** no se pueden modificar.
 - El panel de progreso indica errores en cuanto te desvías de la solución única.
 

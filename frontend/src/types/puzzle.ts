@@ -2,7 +2,8 @@ import type { Constraint } from "./constraints";
 
 export type Entry = {
   digit?: number;
-  pencil: number[];
+  corner: number[];
+  center: number[];
 };
 
 export type PuzzleData = {

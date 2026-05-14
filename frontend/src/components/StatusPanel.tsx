@@ -44,6 +44,9 @@ export function StatusPanel() {
             onChange={(e) => setShowSolution(e.target.checked)}
           />
           Mostrar solución (fantasma)
+          {status.state === "multiple" && (
+            <span style={{ color: "var(--text-dim)" }}>· una de varias</span>
+          )}
         </label>
       )}
     </div>
