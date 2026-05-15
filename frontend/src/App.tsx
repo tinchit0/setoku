@@ -61,7 +61,7 @@ export default function App() {
     <div className="app">
       <div className="topbar">
         <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
-          <h1>Sudoku</h1>
+          <h1>Setoku</h1>
           <div className="mode-switch">
             <button
               className={mode === "build" ? "active" : ""}
