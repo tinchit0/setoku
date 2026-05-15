@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Variant Sudoku API", lifespan=lifespan)
+app = FastAPI(title="Setoku API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

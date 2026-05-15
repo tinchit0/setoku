@@ -1,23 +1,12 @@
 services:
-  backend:
-    build: ./backend
-    container_name: sudoku-backend
-    environment:
-      SUDOKU_DB_PATH: /data/sudoku.db
-    volumes:
-      - sudoku-data:/data
-    expose:
-      - "8000"
-    restart: unless-stopped
-
-  frontend:
-    build: ./frontend
-    container_name: sudoku-frontend
+  sudoku:
+    build: .
+    container_name: setoku
     ports:
-      - "8080:80"
-    depends_on:
-      - backend
+      - "8000:8000"
+    volumes:
+      - setoku-data:/data
     restart: unless-stopped
 
 volumes:
-  sudoku-data:
+  setoku-data:

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+BOLD='\033[1m'; RED='\033[0;31m'; GREEN='\033[0;32m'; RESET='\033[0m'
+ERRORS=0
+
+log()  { printf "\n${BOLD}%s${RESET}\n" "$*"; }
+fail() { printf "${RED}✗ %s${RESET}\n" "$*"; ERRORS=$((ERRORS + 1)); }
+ok()   { printf "${GREEN}✓ %s${RESET}\n" "$*"; }
+
+log "▸ Lint backend (ruff)…"
+cd "$ROOT/backend"
+if [[ ! -f .venv/bin/ruff ]]; then
+  fail "ruff no encontrado — ejecuta scripts/dev primero para crear el entorno"
+else
+  .venv/bin/ruff check . && ok "backend" || fail "backend"
+fi
+
+log "▸ Lint frontend (tsc)…"
+cd "$ROOT/frontend"
+npm run typecheck --silent && ok "frontend" || fail "frontend"
+
+echo ""
+(( ERRORS == 0 )) && printf "${BOLD}Todo OK.${RESET}\n" || { printf "${RED}${ERRORS} error(s).${RESET}\n"; exit 1; }

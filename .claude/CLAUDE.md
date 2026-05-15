@@ -1,4 +1,4 @@
-# Variant Sudoku Builder
+# Setoku
 
 Constructor/jugador de sudokus con variantes (Killer, Termómetro, Kropki, etc.).
 El usuario diseña puzzles añadiendo restricciones; el solver en el navegador
@@ -20,20 +20,24 @@ El backend solo persiste puzzles (CRUD sobre `sudoku.db`).
 
 - En desarrollo: Vite proxea `/api` → `localhost:8000` (ver `frontend/vite.config.ts`)
 - En producción: uvicorn sirve el frontend compilado como ficheros estáticos y
-  expone `/api` en el mismo origen
+  expone `/api` en el mismo origen. Un único contenedor Docker (Dockerfile en la raíz,
+  multi-stage node→python).
 
 ## Comandos
 
 ```bash
-# Desarrollo (hot reload en ambos lados)
-./dev.sh
+scripts/dev    # hot reload: uvicorn --reload + vite dev server
+scripts/test   # pytest (backend) + vitest (frontend)
+scripts/lint   # ruff (backend) + tsc --noEmit (frontend)
 
-# Producción (compila frontend y sirve todo desde uvicorn:8000)
-./serve.sh
+docker compose up --build   # producción: imagen única, uvicorn sirve todo en :8000
 ```
 
-`dev.sh` levanta los dos procesos en paralelo con output prefixado por color
-([backend] / [frontend]) y los mata limpiamente con Ctrl-C.
+`scripts/dev` levanta los dos procesos en paralelo con output prefixado por color
+y los mata limpiamente con Ctrl-C (usa FIFOs para no perder los PIDs reales).
+
+Las deps de dev del backend (pytest, httpx, ruff) están en `[project.optional-dependencies] dev`
+en `backend/pyproject.toml`. `scripts/dev` las instala con `uv pip install -e ".[dev]"`.
 
 ## Frontend (`frontend/src/`)
 

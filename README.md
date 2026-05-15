@@ -1,108 +1,80 @@
-# Variant Sudoku Builder
+# Setoku
 
-Aplicación para construir sudokus con restricciones poco habituales (killer cages, termómetros, flechas, kropki, XV, par/impar, anti-caballo, anti-rey, diagonales…) y jugarlos una vez la solución es única.
+Constructor y jugador de sudokus con variantes: killer cages, termómetros, flechas, Kropki, XV, par/impar, anti-caballo, anti-rey, diagonales… El solver corre en el navegador y comprueba en tiempo real si el puzzle tiene solución única.
 
 ## Estructura
 
-- `backend/` — API FastAPI (Python) con SQLite para guardar y cargar puzzles.
-- `frontend/` — SPA React + Vite + TypeScript con el constructor, el solver y el modo juego.
+```
+frontend/   React + TypeScript + Vite  (solver, constructor, modo juego)
+backend/    FastAPI + SQLite            (guardar y cargar puzzles)
+scripts/    dev, test, lint
+Dockerfile  imagen única para producción
+```
 
 ## Cómo correrlo
 
-### Publicar en internet (un solo puerto)
+### Desarrollo
 
 ```bash
-# 1. Build + arrancar (todo en uno)
-./serve.sh          # queda en http://localhost:8000
-
-# 2. En otra terminal, túnel con localtunnel:
-npx localtunnel --port 8000
+scripts/dev
 ```
 
-localtunnel te da una URL pública (p.ej. `https://xxxx.loca.lt`). La primera vez que alguien la abra verá una página de aviso de localtunnel — basta con hacer clic en "Click to Continue".
+Levanta el backend en `http://localhost:8000` (con `--reload`) y el frontend en `http://localhost:5173` (con HMR). Ctrl-C para detener ambos.
 
----
-
-### Docker Compose (todo en uno)
+### Producción
 
 ```bash
 docker compose up --build
 ```
 
-Abre `http://localhost:8080`. Nginx sirve el frontend y hace proxy de `/api/*` al backend. La DB se guarda en el volumen `sudoku-data`.
+Construye una imagen única (node → python, multi-stage), uvicorn sirve la API y el frontend compilado en `http://localhost:8000`.
 
-### Backend
-
-Recomendado: `uv` (más rápido). Alternativa: `python -m venv` + pip.
+## Scripts
 
 ```bash
-cd backend
-uv venv
-uv pip install -e .
-.venv/bin/uvicorn app.main:app --reload --port 8000
+scripts/dev    # entorno de desarrollo
+scripts/test   # pytest (backend) + vitest (frontend)
+scripts/lint   # ruff (backend) + tsc --noEmit (frontend)
 ```
-
-API disponible en `http://localhost:8000/api`. Endpoints: `GET/POST/PUT/DELETE /puzzles`.
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Abre `http://localhost:5173`. El proxy de Vite redirige `/api/*` al backend.
 
 ## Cómo se usa
 
 ### Modo Constructor
 
-- **Seleccionar**: clic y arrastra para marcar celdas. Shift/Ctrl+clic añade. Esc deselecciona.
-- **Given**: selecciona celdas y pulsa 1-9 para fijarlas. Supr para borrar.
-- **Killer cage**: marca celdas, opcionalmente escribe la suma, "Añadir jaula".
-- **Termómetro**: clic en cada celda en orden desde el bulbo hacia la punta, "Añadir termómetro".
-- **Flecha**: 1) marca el bulbo (1+ celdas), "Fijar bulbo". 2) marca la trayectoria en orden, "Crear flecha". Para multidígito el bulbo se lee en orden de fila/columna.
-- **Kropki**: marca 2 celdas adyacentes y elige blanco (consecutivos) o negro (×2).
-- **XV**: marca 2 celdas adyacentes y elige V (suma 5) o X (suma 10).
-- **Par/Impar**: marca celdas y elige la paridad.
-- **Globales**: diagonal principal/anti, anti-caballo, anti-rey son interruptores.
+- **Seleccionar**: clic y arrastra. Shift/Ctrl+clic añade. Esc deselecciona.
+- **Given**: selecciona celdas y pulsa 1–9. Supr para borrar.
+- **Killer cage**: marca celdas, escribe suma opcional, "Añadir jaula".
+- **Termómetro**: clic en cada celda en orden desde el bulbo, "Añadir termómetro".
+- **Flecha**: 1) marca el bulbo, "Fijar bulbo". 2) marca la trayectoria, "Crear flecha".
+- **Kropki**: 2 celdas adyacentes → blanco (consecutivos) o negro (×2).
+- **XV**: 2 celdas adyacentes → V (suma 5) o X (suma 10).
+- **Par/Impar**: marca celdas y elige paridad.
+- **Globales**: diagonal principal/anti, anti-caballo, anti-rey.
 
-El panel de estado re-evalúa la unicidad cada vez que cambias algo. Estados posibles: sin solución / única / múltiples soluciones. Cuando es **única**, el botón **Jugar** se habilita.
-
-Puedes activar "Mostrar solución (fantasma)" para ver la solución en gris detrás de los dígitos del jugador.
+El panel de estado re-evalúa la unicidad en tiempo real. Cuando hay múltiples soluciones, "Mostrar celdas sin determinar" resalta en ámbar las celdas que difieren entre las dos soluciones encontradas. Cuando la solución es **única**, se habilita el botón **Jugar**.
 
 ### Modo Juego
 
-- **Dígito**: introduce el número en la celda seleccionada.
-- **Marcas (lápiz)**: dos estilos.
-  - **Esquina** — `Ctrl`/`⌘` + 1-9 o elige "Esquina" en el panel.
-  - **Centro** — `Shift` + 1-9 o elige "Centro" en el panel.
-- Las celdas de **givens** no se pueden modificar.
-- El panel de progreso indica errores en cuanto te desvías de la solución única.
+- Pulsa 1–9 para introducir dígitos.
+- Ctrl/⌘+dígito → marca de esquina. Shift+dígito → marca de centro.
+- El panel de progreso indica errores en tiempo real.
 
 ### Guardar / Cargar
 
-La barra superior tiene caja de título y desplegable de puzzles guardados. Los puzzles se persisten en `backend/sudoku.db`.
+La barra superior permite guardar puzzles con título y cargarlos desde el desplegable. Se persisten en `backend/sudoku.db`.
 
 ## Restricciones soportadas
 
-| Tipo | Notas |
+| Tipo | Regla |
 |---|---|
-| Given | dígito fijo en una celda |
-| Diagonal | principal `↘` / anti `↙` |
-| Killer cage | celdas distintas, suma opcional |
-| Termómetro | cells[0] < cells[1] < … |
-| Flecha | suma de trayectoria = número formado por bulbo |
-| Kropki | blanco = consecutivos, negro = ratio 1:2 |
-| XV | V = suma 5, X = suma 10 |
-| Par/Impar | dígito par o impar en una celda |
-| Anti-caballo | no se repite a salto de caballo |
-| Anti-rey | no se repite a salto de rey |
-
-## Limitaciones conocidas
-
-- El solver corre en el hilo principal del navegador. Puzzles muy poco restringidos pueden tardar; en ese caso añade más restricciones o `givens`. Mover a Web Worker es la próxima mejora natural.
-- No hay restricción negativa para Kropki/XV (la falta de marca no implica nada).
-- No hay deshacer global (sí puedes borrar restricciones individuales).
-- Para el modo flecha con bulbo multi-celda, el orden del número compuesto sigue lectura natural (fila, luego columna). Selecciónalas en ese orden.
+| Given | Valor fijo en una celda |
+| Diagonal | Todos distintos en la diagonal ↘ o ↙ |
+| Killer cage | Sin repetición; suma opcional |
+| Termómetro | Valores estrictamente crecientes del bulbo a la punta |
+| Flecha | Bulbo = suma de la trayectoria |
+| Kropki blanco | Las dos celdas son consecutivas |
+| Kropki negro | Una celda es el doble de la otra |
+| XV | V: suman 5 · X: suman 10 |
+| Par/Impar | La celda contiene un dígito par o impar |
+| Anti-caballo | Sin repetición entre celdas a distancia de caballo |
+| Anti-rey | Sin repetición entre celdas diagonalmente adyacentes |

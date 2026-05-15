@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 MAGENTA='\033[0;35m'; CYAN='\033[0;36m'
 BOLD='\033[1m'; DIM='\033[2m'; RESET='\033[0m'
@@ -19,7 +19,7 @@ cd "$ROOT/backend"
 if [[ ! -d .venv ]]; then
   log "  uv venv…"
   uv venv
-  uv pip install -e . -q
+  uv pip install -e ".[dev]" -q
 fi
 
 # ── FIFOs para prefixar output ────────────────────────────────────────────────
@@ -37,7 +37,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# lectores (arrancan primero para abrir los FIFOs antes de que escriban los procesos)
 while IFS= read -r line; do
   printf "${MAGENTA}▌ backend ${RESET}${DIM}│${RESET} %s\n" "$line"
 done < "$BPIPE" &
@@ -59,6 +58,5 @@ log "  Backend   → http://localhost:8000"
 log "  Frontend  → http://localhost:5173"
 printf "${DIM}\n  Ctrl-C para detener ambos.\n${RESET}\n"
 
-# esperar; si cualquiera muere, matar el otro y salir
 wait "${PIDS[0]}" || { log "⚠ backend terminó"; kill "${PIDS[1]}" 2>/dev/null || true; }
 wait "${PIDS[1]}" || { log "⚠ frontend terminó"; kill "${PIDS[0]}" 2>/dev/null || true; }
