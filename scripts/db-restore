@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${DEPLOY_HOST:?DEPLOY_HOST not set}"
+: "${DEPLOY_PATH:?DEPLOY_PATH not set}"
+
+SOURCE="${1:-}"
+if [[ -z "$SOURCE" ]]; then
+  echo "Uso: db-restore <archivo.db>" >&2
+  exit 1
+fi
+
+echo "▶ Subiendo $SOURCE a $DEPLOY_HOST..."
+ssh "$DEPLOY_HOST" "docker stop setoku 2>/dev/null || true"
+scp "$SOURCE" "$DEPLOY_HOST:$DEPLOY_PATH/data/setoku.db"
+ssh "$DEPLOY_HOST" "cd $DEPLOY_PATH && docker compose up -d"
+
+echo "✓ BD restaurada desde $SOURCE"

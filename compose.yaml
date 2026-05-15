@@ -1,13 +1,12 @@
 services:
-  setoku:
+  app:
     image: setoku
     build: .
     container_name: setoku
     ports:
-      - "${SETOKU_PORT:-8000}:8000"
+      - "${SETOKU_PORT:-3000}:3000"
     volumes:
       - ./data:/data
+    environment:
+      - SETOKU_DB_PATH=/data/setoku.db
     restart: unless-stopped
-
-volumes:
-  setoku-data:

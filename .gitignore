@@ -1,22 +1,25 @@
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.venv/
-venv/
-.env
+# Next.js
+.next/
+out/
+
+# Dependencies
+node_modules/
+
+# Database
 *.db
 *.sqlite
 *.sqlite3
+data/
+backups/
 
-# Node
-node_modules/
-dist/
-.vite/
-*.log
-.DS_Store
+# Env
+.env
+.env.local
+.env*.local
 
 # Editor
 .idea/
 .vscode/
 *.swp
+.DS_Store
+*.log

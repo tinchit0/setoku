@@ -1,14 +1,18 @@
-# Setoku
+# SETOKU
 
 Constructor y jugador de sudokus con variantes: killer cages, termómetros, flechas, Kropki, XV, par/impar, anti-caballo, anti-rey, diagonales… El solver corre en el navegador y comprueba en tiempo real si el puzzle tiene solución única.
 
 ## Estructura
 
 ```
-frontend/   React + TypeScript + Vite  (solver, constructor, modo juego)
-backend/    FastAPI + SQLite            (guardar y cargar puzzles)
-scripts/    dev, test, lint
-Dockerfile  imagen única para producción
+src/
+  app/          Next.js pages + API routes (puzzles, health)
+  components/   Componentes React
+  solver/       Solver TS + Web Worker
+  state/        Zustand store
+  types/        Tipos TypeScript
+  lib/          db.ts — SQLite vía @libsql/client
+Dockerfile      imagen Node para producción
 ```
 
 ## Cómo correrlo
@@ -16,10 +20,11 @@ Dockerfile  imagen única para producción
 ### Desarrollo
 
 ```bash
-scripts/dev
+npm install
+npm run dev
 ```
 
-Levanta el backend en `http://localhost:8000` (con `--reload`) y el frontend en `http://localhost:5173` (con HMR). Ctrl-C para detener ambos.
+App en `http://localhost:3000` con HMR. La API y el frontend corren en el mismo proceso.
 
 ### Producción
 
@@ -27,14 +32,14 @@ Levanta el backend en `http://localhost:8000` (con `--reload`) y el frontend en 
 docker compose up --build
 ```
 
-Construye una imagen única (node → python, multi-stage), uvicorn sirve la API y el frontend compilado en `http://localhost:8000`.
+Construye una imagen Node (multi-stage, standalone), sirve todo en `http://localhost:3000`.
 
 ## Scripts
 
 ```bash
-scripts/dev    # entorno de desarrollo
-scripts/test   # pytest (backend) + vitest (frontend)
-scripts/lint   # ruff (backend) + tsc --noEmit (frontend)
+npm run dev    # entorno de desarrollo
+npm test       # vitest (solver)
+npm run lint   # tsc --noEmit
 ```
 
 ## Cómo se usa
@@ -61,7 +66,7 @@ El panel de estado re-evalúa la unicidad en tiempo real. Cuando hay múltiples 
 
 ### Guardar / Cargar
 
-La barra superior permite guardar puzzles con título y cargarlos desde el desplegable. Se persisten en `backend/sudoku.db`.
+La barra superior permite guardar puzzles con título y cargarlos desde el desplegable. Se persisten en SQLite (`setoku.db` local, o `SETOKU_DB_PATH` en producción).
 
 ## Restricciones soportadas
 
