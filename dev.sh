@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+
+MAGENTA='\033[0;35m'; CYAN='\033[0;36m'
+BOLD='\033[1m'; DIM='\033[2m'; RESET='\033[0m'
+
+log() { printf "${BOLD}%s${RESET}\n" "$*"; }
+
+# ── dependencias ──────────────────────────────────────────────────────────────
+
+log "▸ Verificando dependencias…"
+
+cd "$ROOT/frontend"
+[[ -d node_modules ]] || { log "  npm install…"; npm install --silent; }
+
+cd "$ROOT/backend"
+if [[ ! -d .venv ]]; then
+  log "  uv venv…"
+  uv venv
+  uv pip install -e . -q
+fi
+
+# ── FIFOs para prefixar output ────────────────────────────────────────────────
+
+BPIPE=$(mktemp -u /tmp/sudoku-back.XXXXXX)
+FPIPE=$(mktemp -u /tmp/sudoku-front.XXXXXX)
+mkfifo "$BPIPE" "$FPIPE"
+
+PIDS=()
+
+cleanup() {
+  (( ${#PIDS[@]} )) && kill "${PIDS[@]}" 2>/dev/null || true
+  wait 2>/dev/null || true
+  rm -f "$BPIPE" "$FPIPE"
+}
+trap cleanup EXIT
+
+# lectores (arrancan primero para abrir los FIFOs antes de que escriban los procesos)
+while IFS= read -r line; do
+  printf "${MAGENTA}▌ backend ${RESET}${DIM}│${RESET} %s\n" "$line"
+done < "$BPIPE" &
+
+while IFS= read -r line; do
+  printf "${CYAN}▌ frontend${RESET}${DIM}│${RESET} %s\n" "$line"
+done < "$FPIPE" &
+
+# ── servidores ────────────────────────────────────────────────────────────────
+
+(cd "$ROOT/backend" && .venv/bin/uvicorn app.main:app --reload --port 8000 2>&1) > "$BPIPE" &
+PIDS+=($!)
+
+(cd "$ROOT/frontend" && npm run dev 2>&1) > "$FPIPE" &
+PIDS+=($!)
+
+printf "\n"
+log "  Backend   → http://localhost:8000"
+log "  Frontend  → http://localhost:5173"
+printf "${DIM}\n  Ctrl-C para detener ambos.\n${RESET}\n"
+
+# esperar; si cualquiera muere, matar el otro y salir
+wait "${PIDS[0]}" || { log "⚠ backend terminó"; kill "${PIDS[1]}" 2>/dev/null || true; }
+wait "${PIDS[1]}" || { log "⚠ frontend terminó"; kill "${PIDS[0]}" 2>/dev/null || true; }
