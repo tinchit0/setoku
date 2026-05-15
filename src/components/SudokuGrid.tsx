@@ -26,19 +26,14 @@ type Props = {
 export function SudokuGrid({ solutionGrid, diffCells }: Props) {
   const constraints = useStore((s) => s.constraints);
   const selected = useStore((s) => s.selected);
+  const cursor = useStore((s) => s.cursor);
   const entries = useStore((s) => s.entries);
   const mode = useStore((s) => s.mode);
-  const tool = useStore((s) => s.tool);
   const draft = useStore((s) => s.draft);
   const showSolution = useStore((s) => s.showSolution);
 
   const toggleCellSelection = useStore((s) => s.toggleCellSelection);
   const selectCell = useStore((s) => s.selectCell);
-  const clearSelection = useStore((s) => s.clearSelection);
-  const setEntry = useStore((s) => s.setEntry);
-  const toggleCornerMark = useStore((s) => s.toggleCornerMark);
-  const toggleCenterMark = useStore((s) => s.toggleCenterMark);
-  const pencilMode = useStore((s) => s.pencilMode);
 
   const [dragging, setDragging] = useState(false);
   const dragAdditive = useRef(false);
@@ -54,12 +49,6 @@ export function SudokuGrid({ solutionGrid, diffCells }: Props) {
     [givens],
   );
 
-  const isSelected = useCallback(
-    (r: number, c: number) => selected.some((p) => p.r === r && p.c === c),
-    [selected],
-  );
-  void isSelected;
-
   const diffMap = useMemo(() => {
     if (!diffCells) return null;
     const m = new Map<string, DiffCell>();
@@ -71,14 +60,7 @@ export function SudokuGrid({ solutionGrid, diffCells }: Props) {
     [draft.bulb],
   );
 
-  const multiCellTool =
-    mode === "build" &&
-    (tool.kind === "cage" ||
-      tool.kind === "thermometer" ||
-      tool.kind === "arrow" ||
-      tool.kind === "kropki" ||
-      tool.kind === "xv" ||
-      tool.kind === "parity");
+  const multiCellTool = mode === "build";
 
   const onCellPointerDown = (e: React.PointerEvent, r: number, c: number) => {
     e.preventDefault();
@@ -108,94 +90,6 @@ export function SudokuGrid({ solutionGrid, diffCells }: Props) {
     window.addEventListener("pointerup", onPointerUp);
     return () => window.removeEventListener("pointerup", onPointerUp);
   }, []);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (selected.length === 0) return;
-      const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
-      const digit = /^[1-9]$/.test(e.key) ? parseInt(e.key, 10) : null;
-      const isErase = e.key === "Delete" || e.key === "Backspace" || e.key === "0";
-      const useStoreState = useStore.getState();
-      if (digit !== null) {
-        e.preventDefault();
-        if (mode === "build" && tool.kind === "given") {
-          for (const pos of selected) {
-            const existing = constraints.find(
-              (c) => c.kind === "given" && c.pos.r === pos.r && c.pos.c === pos.c,
-            );
-            if (existing) useStoreState.removeConstraint(existing.id);
-            useStoreState.addConstraint({
-              id: Math.random().toString(36).slice(2, 10),
-              kind: "given",
-              pos,
-              digit,
-            });
-          }
-        } else if (mode === "play") {
-          const wantCorner = e.ctrlKey || e.metaKey;
-          const wantCenter = e.shiftKey;
-          if (wantCorner) {
-            for (const pos of selected) toggleCornerMark(pos, digit);
-          } else if (wantCenter) {
-            for (const pos of selected) toggleCenterMark(pos, digit);
-          } else if (pencilMode === "corner") {
-            for (const pos of selected) toggleCornerMark(pos, digit);
-          } else if (pencilMode === "center") {
-            for (const pos of selected) toggleCenterMark(pos, digit);
-          } else {
-            for (const pos of selected) setEntry(pos, digit);
-          }
-        }
-        return;
-      }
-      if (isErase) {
-        e.preventDefault();
-        if (mode === "build" && tool.kind === "given") {
-          for (const pos of selected) {
-            const existing = constraints.find(
-              (c) => c.kind === "given" && c.pos.r === pos.r && c.pos.c === pos.c,
-            );
-            if (existing) useStoreState.removeConstraint(existing.id);
-          }
-        } else if (mode === "play") {
-          for (const pos of selected) setEntry(pos, undefined);
-        }
-      }
-      if (e.key === "Escape") {
-        clearSelection();
-      }
-      if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
-        e.preventDefault();
-        const cur = selected[selected.length - 1];
-        if (!cur) return;
-        let nr = cur.r;
-        let nc = cur.c;
-        if (e.key === "ArrowUp") nr = Math.max(0, cur.r - 1);
-        if (e.key === "ArrowDown") nr = Math.min(8, cur.r + 1);
-        if (e.key === "ArrowLeft") nc = Math.max(0, cur.c - 1);
-        if (e.key === "ArrowRight") nc = Math.min(8, cur.c + 1);
-        if (e.ctrlKey || e.metaKey) {
-          selectCell({ r: nr, c: nc });
-        } else {
-          toggleCellSelection({ r: nr, c: nc }, false);
-        }
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [
-    selected,
-    mode,
-    tool,
-    constraints,
-    toggleCornerMark,
-    toggleCenterMark,
-    pencilMode,
-    setEntry,
-    clearSelection,
-    toggleCellSelection,
-  ]);
 
   return (
     <svg viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ userSelect: "none" }}>
@@ -247,18 +141,33 @@ export function SudokuGrid({ solutionGrid, diffCells }: Props) {
         return (
           <rect
             key={`sel-${r}-${c}`}
-            x={x + 2}
-            y={y + 2}
-            width={CELL - 4}
-            height={CELL - 4}
-            fill="rgba(122,162,255,0.18)"
-            stroke="#7aa2ff"
-            strokeWidth={2.5}
-            rx={2}
+            x={x}
+            y={y}
+            width={CELL}
+            height={CELL}
+            fill="rgba(230,219,116,0.13)"
             pointerEvents="none"
           />
         );
       })}
+
+      {/* Cursor (always visible) */}
+      {(() => {
+        const { x, y } = cellTopLeft(cursor.r, cursor.c);
+        return (
+          <rect
+            x={x + 1.5}
+            y={y + 1.5}
+            width={CELL - 3}
+            height={CELL - 3}
+            fill="none"
+            stroke="#e6db74"
+            strokeWidth={2}
+            rx={1}
+            pointerEvents="none"
+          />
+        );
+      })()}
 
       <CageOverlay constraints={constraints} />
       <ParityOverlay constraints={constraints} />

@@ -408,6 +408,109 @@ kbd {
   .tool-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
+/* ── Keyboard status indicator ───────────────────────────── */
+
+.kb-status {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent-2);
+}
+.kb-status-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-2);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.kb-status-msg {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ── Shortcut reference table ─────────────────────────────── */
+
+.shortcut-table {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+}
+.shortcut-section {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 0;
+}
+.shortcut-sep {
+  border-top: 1px solid var(--border);
+  margin: 1px 0;
+}
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.shortcut-keys {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+.shortcut-desc {
+  color: var(--text-dim);
+}
+
+/* ── Cage sum dialog ──────────────────────────────────────── */
+
+.cage-dialog {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  padding: 0;
+  color: var(--text);
+  width: min(300px, 90vw);
+  box-shadow: 0 0 0 1px rgba(230,219,116,0.08), 0 24px 64px rgba(0,0,0,0.85);
+}
+.cage-dialog::backdrop {
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(3px);
+}
+.cage-dialog-inner {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.cage-dialog-inner h3 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+.cage-dialog-inner h3::before {
+  content: '// ';
+  color: var(--accent-2);
+  font-weight: 400;
+}
+.cage-dialog-meta {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.cage-dialog-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 /* ── Help dialog ─────────────────────────────────────────── */
 
 .help-dialog {

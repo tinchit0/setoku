@@ -19,6 +19,7 @@ export type PencilMode = "digit" | "corner" | "center";
 export type State = {
   mode: Mode;
   tool: Tool;
+  cursor: CellPos;
   constraints: Constraint[];
   selected: CellPos[];
   entries: Record<string, Entry>;
@@ -34,6 +35,8 @@ export type State = {
 export type Actions = {
   setMode: (mode: Mode) => void;
   setTool: (tool: Tool) => void;
+  setCursor: (pos: CellPos) => void;
+  moveCursor: (dr: number, dc: number, extend: boolean) => void;
   clearSelection: () => void;
   toggleCellSelection: (pos: CellPos, additive: boolean) => void;
   selectCell: (pos: CellPos) => void;
@@ -67,6 +70,7 @@ export { newId };
 export const useStore = create<State & Actions>((set, get) => ({
   mode: "build",
   tool: { kind: "select" },
+  cursor: { r: 0, c: 0 },
   constraints: [],
   selected: [],
   entries: {},
@@ -78,23 +82,39 @@ export const useStore = create<State & Actions>((set, get) => ({
 
   setMode: (mode) => set({ mode, selected: [], tool: { kind: "select" }, draft: {} }),
   setTool: (tool) => set({ tool, selected: [], draft: {} }),
+
+  setCursor: (pos) => set({ cursor: pos }),
+
+  moveCursor: (dr, dc, extend) => {
+    const { cursor, selected } = get();
+    const nr = Math.max(0, Math.min(8, cursor.r + dr));
+    const nc = Math.max(0, Math.min(8, cursor.c + dc));
+    const newCursor = { r: nr, c: nc };
+    if (extend) {
+      const already = selected.some((p) => eqPos(p, newCursor));
+      set({ cursor: newCursor, selected: already ? selected : [...selected, newCursor] });
+    } else {
+      set({ cursor: newCursor, selected: [newCursor] });
+    }
+  },
+
   clearSelection: () => set({ selected: [] }),
 
   toggleCellSelection: (pos, additive) => {
     const cur = get().selected;
     if (additive) {
       const has = cur.some((p) => eqPos(p, pos));
-      set({ selected: has ? cur.filter((p) => !eqPos(p, pos)) : [...cur, pos] });
+      set({ cursor: pos, selected: has ? cur.filter((p) => !eqPos(p, pos)) : [...cur, pos] });
     } else {
       const onlyMe = cur.length === 1 && eqPos(cur[0], pos);
-      set({ selected: onlyMe ? [] : [pos] });
+      set({ cursor: pos, selected: onlyMe ? [] : [pos] });
     }
   },
 
   selectCell: (pos) => {
     const cur = get().selected;
     if (cur.some((p) => eqPos(p, pos))) return;
-    set({ selected: [...cur, pos] });
+    set({ cursor: pos, selected: [...cur, pos] });
   },
 
   addConstraint: (c) => set({ constraints: [...get().constraints, c] }),
@@ -181,6 +201,7 @@ export const useStore = create<State & Actions>((set, get) => ({
       constraints,
       entries: {},
       selected: [],
+      cursor: { r: 0, c: 0 },
       tool: { kind: "select" },
       solveStatus: { state: "idle" },
       showSolution: false,
@@ -192,6 +213,7 @@ export const useStore = create<State & Actions>((set, get) => ({
     set({
       mode: "build",
       tool: { kind: "select" },
+      cursor: { r: 0, c: 0 },
       constraints: [],
       selected: [],
       entries: {},
