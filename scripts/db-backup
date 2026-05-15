@@ -7,7 +7,16 @@ set -euo pipefail
 DEST="backups/setoku-$(date +%Y%m%d-%H%M%S).db"
 mkdir -p backups
 
+echo "▶ Parando contenedor..."
+ssh "$DEPLOY_HOST" "docker stop setoku 2>/dev/null || true"
+
 echo "▶ Descargando BD desde $DEPLOY_HOST..."
-scp "$DEPLOY_HOST:$DEPLOY_PATH/data/setoku.db" "$DEST"
+ssh "$DEPLOY_HOST" "docker run --rm \
+  -v '${DEPLOY_PATH}/data:/data' \
+  --entrypoint /bin/sh \
+  setoku -c 'cat /data/setoku.db'" > "$DEST"
+
+echo "▶ Reiniciando contenedor..."
+ssh "$DEPLOY_HOST" "cd '$DEPLOY_PATH' && docker compose up -d"
 
 echo "✓ Guardado en $DEST"

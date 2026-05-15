@@ -10,9 +10,17 @@ if [[ -z "$SOURCE" ]]; then
   exit 1
 fi
 
-echo "▶ Subiendo $SOURCE a $DEPLOY_HOST..."
+echo "▶ Parando contenedor..."
 ssh "$DEPLOY_HOST" "docker stop setoku 2>/dev/null || true"
-scp "$SOURCE" "$DEPLOY_HOST:$DEPLOY_PATH/data/setoku.db"
-ssh "$DEPLOY_HOST" "cd $DEPLOY_PATH && docker compose up -d"
+
+echo "▶ Subiendo $SOURCE a $DEPLOY_HOST..."
+ssh "$DEPLOY_HOST" "mkdir -p '${DEPLOY_PATH}/data'"
+cat "$SOURCE" | ssh "$DEPLOY_HOST" "docker run --rm -i \
+  -v '${DEPLOY_PATH}/data:/data' \
+  --entrypoint /bin/sh \
+  setoku -c 'cat > /data/setoku.db'"
+
+echo "▶ Reiniciando contenedor..."
+ssh "$DEPLOY_HOST" "cd '$DEPLOY_PATH' && docker compose up -d"
 
 echo "✓ BD restaurada desde $SOURCE"
