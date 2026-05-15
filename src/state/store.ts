@@ -30,6 +30,8 @@ export type State = {
   draft: {
     bulb?: CellPos[];
   };
+  puzzleId: number | null;
+  puzzleTitle: string;
 };
 
 export type Actions = {
@@ -56,7 +58,9 @@ export type Actions = {
   setShowSolution: (v: boolean) => void;
   setShowDiff: (v: boolean) => void;
   setPencilMode: (m: PencilMode) => void;
-  loadPuzzle: (constraints: Constraint[]) => void;
+  setPuzzleId: (id: number | null) => void;
+  setPuzzleTitle: (title: string) => void;
+  loadPuzzle: (constraints: Constraint[], id?: number | null, title?: string) => void;
   reset: () => void;
 };
 
@@ -79,6 +83,8 @@ export const useStore = create<State & Actions>((set, get) => ({
   showDiff: false,
   pencilMode: "digit",
   draft: {},
+  puzzleId: null,
+  puzzleTitle: "",
 
   setMode: (mode) => set({ mode, selected: [], tool: { kind: "select" }, draft: {} }),
   setTool: (tool) => set({ tool, selected: [], draft: {} }),
@@ -195,8 +201,10 @@ export const useStore = create<State & Actions>((set, get) => ({
   setShowSolution: (v) => set({ showSolution: v }),
   setShowDiff: (v) => set({ showDiff: v }),
   setPencilMode: (m) => set({ pencilMode: m }),
+  setPuzzleId: (id) => set({ puzzleId: id }),
+  setPuzzleTitle: (title) => set({ puzzleTitle: title }),
 
-  loadPuzzle: (constraints) =>
+  loadPuzzle: (constraints, id, title) =>
     set({
       constraints,
       entries: {},
@@ -207,6 +215,8 @@ export const useStore = create<State & Actions>((set, get) => ({
       showSolution: false,
       showDiff: false,
       draft: {},
+      puzzleId: id ?? null,
+      puzzleTitle: title ?? "",
     }),
 
   reset: () =>
@@ -221,5 +231,7 @@ export const useStore = create<State & Actions>((set, get) => ({
       showSolution: false,
       showDiff: false,
       draft: {},
+      puzzleId: null,
+      puzzleTitle: "",
     }),
 }));

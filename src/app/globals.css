@@ -114,11 +114,17 @@ input:focus, textarea:focus, select:focus {
 
 /* ── Layout ──────────────────────────────────────────────── */
 
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .app {
   display: grid;
   grid-template-columns: 1fr 360px;
   grid-template-rows: auto 1fr;
-  height: 100vh;
+  height: calc(100vh - 48px);
   gap: 12px;
   padding: 12px;
 }
@@ -366,6 +372,312 @@ kbd {
   color: var(--accent);
 }
 
+/* ── Navbar ──────────────────────────────────────────────── */
+
+.navbar {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.navbar-logo {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-decoration: none;
+  margin-right: 24px;
+  white-space: nowrap;
+}
+.navbar-logo::before {
+  content: '> ';
+  color: var(--text-dim);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.navbar-links a {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: color 0.08s, background 0.08s;
+}
+.navbar-links a:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+.navbar-links a.active {
+  color: var(--accent);
+  background: rgba(230, 219, 116, 0.08);
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+}
+
+.navbar-username {
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* ── Page shell (explore, profile, etc.) ─────────────────── */
+
+.page-shell {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 20px;
+  width: 100%;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-header h1 {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.page-header h1::before {
+  color: var(--accent-2);
+}
+
+.page-empty {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+.page-empty a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.page-empty a:hover { text-decoration: underline; }
+
+/* Generic link styled as button */
+.button-link {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.08s, color 0.08s, border-color 0.08s;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.button-link:hover {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+.button-link.primary {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+.button-link.primary:hover { filter: brightness(1.1); }
+
+/* ── Puzzle grid (explore) ───────────────────────────────── */
+
+.puzzle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.puzzle-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  border-radius: 2px;
+  transition: border-color 0.1s;
+}
+.puzzle-card:hover {
+  border-color: var(--accent);
+  border-left-color: var(--accent-2);
+}
+
+.puzzle-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.puzzle-card-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.puzzle-card-desc {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.puzzle-card-actions {
+  margin-top: 4px;
+}
+
+/* ── Puzzle list (profile) ───────────────────────────────── */
+
+.puzzle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.puzzle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 2px solid transparent;
+  border-radius: 2px;
+  transition: border-left-color 0.1s;
+}
+.puzzle-row:hover { border-left-color: var(--accent); }
+
+.puzzle-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.puzzle-row-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.puzzle-row-date {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.puzzle-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Puzzle title in play topbar ─────────────────────────── */
+
+.puzzle-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Admin tabs ──────────────────────────────────────────── */
+
+.admin-tabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  align-self: flex-start;
+}
+.admin-tabs button {
+  border: none;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  font-size: 11px;
+  padding: 8px 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  background: transparent;
+}
+.admin-tabs button:last-child { border-right: none; }
+.admin-tabs button.active {
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+/* ── Puzzle admin table ──────────────────────────────────── */
+
+.puzzle-table-head {
+  display: grid;
+  grid-template-columns: 1fr 140px 100px 120px;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.puzzle-admin-row {
+  display: grid;
+  grid-template-columns: 1fr 140px 100px 120px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 2px solid transparent;
+  font-size: 12px;
+  transition: border-left-color 0.1s;
+}
+.puzzle-admin-row:hover { border-left-color: var(--accent); }
+
 /* ── Save/load bar ───────────────────────────────────────── */
 
 .save-load-bar {
@@ -384,11 +696,17 @@ kbd {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
     height: auto;
-    min-height: 100svh;
+    min-height: calc(100svh - 48px);
     padding: 8px;
     gap: 8px;
     overflow-y: auto;
   }
+  .puzzle-grid { grid-template-columns: 1fr; }
+  .puzzle-row { flex-direction: column; align-items: flex-start; }
+  .puzzle-table-head { display: none; }
+  .puzzle-admin-row { grid-template-columns: 1fr auto; grid-template-rows: auto auto; }
+  .navbar-logo { letter-spacing: 2px; }
+  .navbar-links a { padding: 5px 7px; font-size: 10px; }
   .topbar { gap: 6px; }
   .topbar h1 { font-size: 13px; flex: 1; }
   .board-area { overflow: visible; }
@@ -406,6 +724,222 @@ kbd {
 
 @media (max-width: 400px) {
   .tool-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Auth pages ──────────────────────────────────────────── */
+
+.auth-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--accent);
+  border-radius: 2px;
+  padding: 32px;
+  width: min(400px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+}
+
+.auth-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.auth-logo {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.auth-subtitle {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.auth-subtitle::before { content: ''; }
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--danger);
+  padding: 8px 10px;
+  border: 1px solid rgba(249, 38, 114, 0.25);
+  background: rgba(249, 38, 114, 0.07);
+  border-radius: 2px;
+}
+
+.auth-footer {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.auth-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+.auth-link:hover { text-decoration: underline; }
+
+/* ── User badge (topbar) ─────────────────────────────────── */
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+}
+
+.user-badge-name {
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.admin-link {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-2);
+  text-decoration: none;
+  padding: 4px 8px;
+  border: 1px solid var(--accent-2);
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background 0.08s, color 0.08s;
+}
+.admin-link:hover {
+  background: var(--accent-2);
+  color: var(--bg);
+}
+
+/* ── Admin page ──────────────────────────────────────────── */
+
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 20px;
+  gap: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--accent);
+}
+
+.admin-back-link {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.08s;
+}
+.admin-back-link:hover { color: var(--accent); }
+
+.admin-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-section-header h2 {
+  font-size: 11px;
+  margin: 0;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+.admin-section-header h2::before { content: ''; }
+
+.admin-create-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent-2);
+  padding: 16px;
+}
+.admin-create-form .field { gap: 4px; }
+.admin-create-form .toolbar-row { grid-column: 1 / -1; }
+.admin-create-form .auth-error { grid-column: 1 / -1; }
+
+.user-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-table-head {
+  display: grid;
+  grid-template-columns: 160px 1fr 80px 100px 80px;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.user-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 80px 100px 80px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 2px solid transparent;
+  font-size: 12px;
+  transition: border-left-color 0.1s;
+}
+.user-row:hover { border-left-color: var(--accent); }
+
+.user-name { font-weight: 600; color: var(--text); }
+.user-email { color: var(--text-dim); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-date { color: var(--text-dim); font-size: 11px; }
+
+@media (max-width: 600px) {
+  .user-table-head { display: none; }
+  .user-row {
+    grid-template-columns: 1fr auto auto;
+    grid-template-rows: auto auto;
+  }
+  .user-name { grid-column: 1; }
+  .user-email { grid-column: 1 / -1; grid-row: 2; }
+  .user-date { display: none; }
+  .admin-create-form { grid-template-columns: 1fr; }
 }
 
 /* ── Keyboard status indicator ───────────────────────────── */
