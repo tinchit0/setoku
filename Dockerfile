@@ -1,5 +1,5 @@
 # ── Stage 1: compilar frontend ────────────────────────────────────────────────
-FROM node:20-alpine AS frontend-build
+FROM node:24-alpine AS frontend-build
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --include=dev
@@ -18,6 +18,6 @@ RUN pip install --no-cache-dir -e .
 # Con __file__ = /app/app/main.py, eso resuelve a /frontend/dist
 COPY --from=frontend-build /frontend/dist /frontend/dist
 
-ENV SUDOKU_DB_PATH=/data/sudoku.db
+ENV SETOKU_DB_PATH=/data/setoku.db
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

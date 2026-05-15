@@ -1,11 +1,12 @@
 services:
-  sudoku:
+  setoku:
+    image: setoku
     build: .
     container_name: setoku
     ports:
-      - "8000:8000"
+      - "${SETOKU_PORT:-8000}:8000"
     volumes:
-      - setoku-data:/data
+      - ./data:/data
     restart: unless-stopped
 
 volumes:

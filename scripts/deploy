@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$SCRIPTS_DIR/.."
+cd "$ROOT"
+
+: "${DEPLOY_HOST:?Falta DEPLOY_HOST — defínelo en .env o en el entorno}"
+: "${DEPLOY_PATH:?Falta DEPLOY_PATH — defínelo en .env o en el entorno}"
+
+echo "→ Construyendo imagen Docker localmente..."
+docker build -t setoku .
+
+echo "→ Transfiriendo imagen a $DEPLOY_HOST (puede tardar un momento)..."
+docker save setoku | gzip | ssh "$DEPLOY_HOST" 'gunzip | docker load'
+
+echo "→ Sincronizando compose.yaml..."
+ssh "$DEPLOY_HOST" "mkdir -p $DEPLOY_PATH"
+rsync -az compose.yaml "$DEPLOY_HOST:$DEPLOY_PATH/"
+
+echo "→ Levantando contenedor en $DEPLOY_HOST..."
+ssh "$DEPLOY_HOST" "cd $DEPLOY_PATH && docker compose up -d"
+
+echo "✓ Desplegado en $DEPLOY_HOST"
