@@ -352,3 +352,100 @@ kbd {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ── Help dialog ─────────────────────────────────────── */
+
+.help-dialog {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0;
+  color: var(--text);
+  width: min(680px, 94vw);
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,.6);
+}
+
+.help-dialog::backdrop {
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(2px);
+}
+
+.help-dialog-inner {
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+.help-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.help-dialog-header h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.help-close {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 16px;
+  padding: 4px 8px;
+  line-height: 1;
+}
+.help-close:hover { color: var(--text); background: var(--surface-2); }
+
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 16px 20px 20px;
+  overflow-y: auto;
+}
+
+.help-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.help-card-icon {
+  font-size: 15px;
+  font-family: monospace;
+  color: var(--accent);
+  min-width: 36px;
+  text-align: center;
+  padding-top: 1px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.help-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.help-card-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+@media (max-width: 500px) {
+  .help-grid {
+    grid-template-columns: 1fr;
+  }
+}

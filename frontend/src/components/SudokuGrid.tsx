@@ -14,12 +14,14 @@ const cellCenter = (r: number, c: number) => ({
   y: PAD + r * CELL + CELL / 2,
 });
 
+type DiffCell = { r: number; c: number; val1: number; val2: number };
+
 type Props = {
-  // Solution overlay (read-only)
   solutionGrid?: number[][];
+  diffCells?: DiffCell[];
 };
 
-export function SudokuGrid({ solutionGrid }: Props) {
+export function SudokuGrid({ solutionGrid, diffCells }: Props) {
   const constraints = useStore((s) => s.constraints);
   const selected = useStore((s) => s.selected);
   const entries = useStore((s) => s.entries);
@@ -54,6 +56,13 @@ export function SudokuGrid({ solutionGrid }: Props) {
     (r: number, c: number) => selected.some((p) => p.r === r && p.c === c),
     [selected],
   );
+
+  const diffMap = useMemo(() => {
+    if (!diffCells) return null;
+    const m = new Map<string, DiffCell>();
+    for (const d of diffCells) m.set(`${d.r},${d.c}`, d);
+    return m;
+  }, [diffCells]);
   const isDraftBulb = useCallback(
     (r: number, c: number) => !!draft.bulb && draft.bulb.some((p) => p.r === r && p.c === c),
     [draft.bulb],
@@ -214,6 +223,22 @@ export function SudokuGrid({ solutionGrid }: Props) {
         }),
       )}
 
+      {/* Diff cells highlight */}
+      {diffMap && Array.from(diffMap.values()).map(({ r, c }) => {
+        const { x, y } = cellTopLeft(r, c);
+        return (
+          <rect
+            key={`diff-bg-${r}-${c}`}
+            x={x}
+            y={y}
+            width={CELL}
+            height={CELL}
+            fill="rgba(255,180,40,0.22)"
+            pointerEvents="none"
+          />
+        );
+      })}
+
       {/* Selection highlight */}
       {selected.map(({ r, c }) => {
         const { x, y } = cellTopLeft(r, c);
@@ -298,6 +323,39 @@ export function SudokuGrid({ solutionGrid }: Props) {
               >
                 {solutionDigit}
               </text>
+            );
+          }
+          const diff = diffMap?.get(`${r},${c}`);
+          if (diff) {
+            const bx = PAD + c * CELL;
+            const by = PAD + r * CELL;
+            return (
+              <g key={`diff-${r}-${c}`} pointerEvents="none">
+                <text
+                  x={bx + CELL * 0.27}
+                  y={by + CELL * 0.28}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={16}
+                  fontWeight={700}
+                  fill="#d97706"
+                  opacity={0.9}
+                >
+                  {diff.val1}
+                </text>
+                <text
+                  x={bx + CELL * 0.73}
+                  y={by + CELL * 0.28}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={16}
+                  fontWeight={700}
+                  fill="#b45309"
+                  opacity={0.9}
+                >
+                  {diff.val2}
+                </text>
+              </g>
             );
           }
           const corner = entry?.corner ?? [];

@@ -24,6 +24,7 @@ export type State = {
   entries: Record<string, Entry>;
   solveStatus: SolveStatus;
   showSolution: boolean;
+  showDiff: boolean;
   pencilMode: PencilMode;
   draft: {
     bulb?: CellPos[];
@@ -50,6 +51,7 @@ export type Actions = {
   clearAllEntries: () => void;
   setSolveStatus: (s: SolveStatus) => void;
   setShowSolution: (v: boolean) => void;
+  setShowDiff: (v: boolean) => void;
   setPencilMode: (m: PencilMode) => void;
   loadPuzzle: (constraints: Constraint[]) => void;
   reset: () => void;
@@ -70,6 +72,7 @@ export const useStore = create<State & Actions>((set, get) => ({
   entries: {},
   solveStatus: { state: "idle" },
   showSolution: false,
+  showDiff: false,
   pencilMode: "digit",
   draft: {},
 
@@ -170,6 +173,7 @@ export const useStore = create<State & Actions>((set, get) => ({
 
   setSolveStatus: (s) => set({ solveStatus: s }),
   setShowSolution: (v) => set({ showSolution: v }),
+  setShowDiff: (v) => set({ showDiff: v }),
   setPencilMode: (m) => set({ pencilMode: m }),
 
   loadPuzzle: (constraints) =>
@@ -180,6 +184,7 @@ export const useStore = create<State & Actions>((set, get) => ({
       tool: { kind: "select" },
       solveStatus: { state: "idle" },
       showSolution: false,
+      showDiff: false,
       draft: {},
     }),
 
@@ -192,6 +197,7 @@ export const useStore = create<State & Actions>((set, get) => ({
       entries: {},
       solveStatus: { state: "idle" },
       showSolution: false,
+      showDiff: false,
       draft: {},
     }),
 }));
