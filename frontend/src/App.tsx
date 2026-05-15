@@ -6,7 +6,7 @@ import { PlayPanel } from "./components/PlayPanel";
 import { StatusPanel } from "./components/StatusPanel";
 import { SaveLoadBar } from "./components/SaveLoadBar";
 import { HelpDialog } from "./components/HelpDialog";
-import { solvePuzzle } from "./solver/solver";
+import type { SolveResult } from "./solver/solver";
 
 export default function App() {
   const mode = useStore((s) => s.mode);
@@ -19,6 +19,23 @@ export default function App() {
 
   const solveTimer = useRef<number | null>(null);
   const solveSeq = useRef(0);
+  const workerRef = useRef<Worker | null>(null);
+
+  useEffect(() => {
+    const worker = new Worker(new URL("./solver/solver.worker.ts", import.meta.url), {
+      type: "module",
+    });
+    worker.onmessage = (e: MessageEvent<{ result: SolveResult; seq: number }>) => {
+      const { result, seq } = e.data;
+      if (seq !== solveSeq.current) return;
+      if (result.state === "none") setSolveStatus({ state: "none" });
+      else if (result.state === "unique")
+        setSolveStatus({ state: "unique", solution: result.solution });
+      else setSolveStatus({ state: "multiple", solutions: result.solutions });
+    };
+    workerRef.current = worker;
+    return () => worker.terminate();
+  }, [setSolveStatus]);
 
   useEffect(() => {
     if (constraints.length === 0) {
@@ -29,12 +46,7 @@ export default function App() {
     const mySeq = ++solveSeq.current;
     setSolveStatus({ state: "solving" });
     solveTimer.current = window.setTimeout(() => {
-      const result = solvePuzzle(constraints);
-      if (mySeq !== solveSeq.current) return;
-      if (result.state === "none") setSolveStatus({ state: "none" });
-      else if (result.state === "unique")
-        setSolveStatus({ state: "unique", solution: result.solution });
-      else setSolveStatus({ state: "multiple", solutions: result.solutions });
+      workerRef.current?.postMessage({ constraints, seq: mySeq });
     }, 200) as unknown as number;
     return () => {
       if (solveTimer.current !== null) window.clearTimeout(solveTimer.current);

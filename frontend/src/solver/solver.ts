@@ -10,11 +10,17 @@ const HAS = (mask: number, d: number) => (mask & BIT(d)) !== 0;
 
 function bitCount(m: number): number {
   let c = 0;
-  while (m) {
-    m &= m - 1;
-    c++;
-  }
+  while (m) { m &= m - 1; c++; }
   return c;
+}
+
+function lowestBit(m: number): number {
+  return m & -m;
+}
+
+function lowestDigit(mask: number): number {
+  for (let d = 1; d <= 9; d++) if (HAS(mask, d)) return d;
+  return 0;
 }
 
 function digitsFromMask(m: number): number[] {
@@ -29,31 +35,26 @@ type PairConstraint =
   | { kind: "kropki"; color: "white" | "black"; a: number; b: number }
   | { kind: "xv"; mark: "x" | "v"; a: number; b: number };
 
-type ThermoEntry = {
-  cells: number[]; // ordered cell ids from bulb up
-};
+type ThermoEntry = { cells: number[] };
 
 type CageEntry = {
   id: string;
   cells: number[];
   sum?: number;
+  combMask?: number[]; // combMask[cellIdx] = allowed digits mask from sum combos
 };
 
-type ArrowEntry = {
-  id: string;
-  bulb: number[];
-  path: number[];
-};
+type ArrowEntry = { id: string; bulb: number[]; path: number[] };
 
 type Prepared = {
-  peers: Uint8Array[]; // peers[i] = 1 byte per cell (1 if peer)
-  initialCandidates: number[];
+  peers: Uint8Array[];
+  initialCandidates: Int32Array;
   pairsByCell: Map<number, PairConstraint[]>;
   thermosByCell: Map<number, { thermoIdx: number; pos: number }[]>;
   thermos: ThermoEntry[];
-  cagesByCell: Map<number, number[]>; // cage indices
+  cagesByCell: Map<number, number[]>;
   cages: CageEntry[];
-  arrowsByCell: Map<number, number[]>; // arrow indices
+  arrowsByCell: Map<number, number[]>;
   arrows: ArrowEntry[];
 };
 
@@ -63,9 +64,70 @@ function addPeer(peers: Uint8Array[], a: number, b: number) {
   peers[b][a] = 1;
 }
 
+// Enumerate all combinations of `count` distinct digits from available mask that sum to target.
+// Returns per-position allowed digit masks (length = count).
+function cageComboMasks(count: number, target: number, available: number): number[] | null {
+  const masks = new Array<number>(count).fill(0);
+  let found = false;
+
+  function pick(pos: number, remSum: number, usedMask: number, minDigit: number) {
+    if (pos === count) {
+      if (remSum === 0) {
+        found = true;
+        // record which digits were used at each position is hard retroactively —
+        // instead just OR the full combo into each slot via backtrack below
+      }
+      return;
+    }
+    const remaining = count - pos;
+    for (let d = minDigit; d <= 9; d++) {
+      if (!HAS(available, d)) continue;
+      if (HAS(usedMask, d)) continue;
+      // pruning: min possible sum for rest (d + d+1 + ... + d+remaining-1)
+      // max possible sum for rest (9 + 8 + ... + 9-remaining+2)
+      const minRest = d * remaining - (remaining * (remaining - 1)) / 2;
+      const maxRest = (9 * remaining) - (remaining * (remaining - 1)) / 2;
+      if (remSum - d < minRest - d || remSum - d > maxRest - d) {
+        // simpler: just prune if d > remSum (can't go negative)
+      }
+      if (d > remSum) break;
+      masks[pos] |= BIT(d); // tentative — will AND at end; here we need per-slot
+    }
+  }
+
+  // Simpler flat enumeration for small counts (≤9 cells, ≤45 sum)
+  const slots = new Array<number>(count).fill(0);
+  function enumerate(pos: number, remSum: number, minDigit: number, usedMask: number): void {
+    if (pos === count) {
+      if (remSum === 0) {
+        found = true;
+        for (let i = 0; i < count; i++) masks[i] |= BIT(slots[i]);
+      }
+      return;
+    }
+    const remaining = count - pos;
+    for (let d = minDigit; d <= 9 - (remaining - 1); d++) {
+      if (!HAS(available, d)) continue;
+      // min sum of remaining after placing d
+      // smallest remaining-1 distinct digits > d: (d+1)+(d+2)+...+(d+remaining-1)
+      const minAfter = (remaining - 1) * d + (remaining - 1) * remaining / 2;
+      if (remSum - d < minAfter) break; // d too large, rest can't reach
+      // max sum of remaining after placing d
+      // largest remaining-1 distinct digits < 10: 9+8+...+(9-remaining+2)
+      const maxAfter = (9 + 9 - (remaining - 2)) * (remaining - 1) / 2;
+      if (remSum - d > maxAfter) continue; // d too small
+      slots[pos] = d;
+      enumerate(pos + 1, remSum - d, d + 1, usedMask | BIT(d));
+    }
+  }
+
+  enumerate(0, target, 1, 0);
+  return found ? masks : null;
+}
+
 function prepare(constraints: Constraint[]): Prepared | { error: string } {
   const peers: Uint8Array[] = Array.from({ length: N * N }, () => new Uint8Array(N * N));
-  const initialCandidates = new Array(N * N).fill(FULL_MASK);
+  const initialCandidates = new Int32Array(N * N).fill(FULL_MASK);
 
   for (let r = 0; r < N; r++) {
     for (let c = 0; c < N; c++) {
@@ -76,13 +138,11 @@ function prepare(constraints: Constraint[]): Prepared | { error: string } {
       }
       const br = Math.floor(r / 3) * 3;
       const bc = Math.floor(c / 3) * 3;
-      for (let dr = 0; dr < 3; dr++) {
+      for (let dr = 0; dr < 3; dr++)
         for (let dc = 0; dc < 3; dc++) {
-          const rr = br + dr;
-          const cc = bc + dc;
+          const rr = br + dr, cc = bc + dc;
           if (rr !== r || cc !== c) addPeer(peers, id, cellId(rr, cc));
         }
-      }
     }
   }
 
@@ -111,7 +171,8 @@ function prepare(constraints: Constraint[]): Prepared | { error: string } {
       case "diagonal": {
         if (c.which === "main") {
           for (let i = 0; i < N; i++)
-            for (let j = 0; j < N; j++) if (i !== j) addPeer(peers, cellId(i, i), cellId(j, j));
+            for (let j = 0; j < N; j++)
+              if (i !== j) addPeer(peers, cellId(i, i), cellId(j, j));
         } else {
           for (let i = 0; i < N; i++)
             for (let j = 0; j < N; j++)
@@ -120,58 +181,55 @@ function prepare(constraints: Constraint[]): Prepared | { error: string } {
         break;
       }
       case "antiKnight": {
-        const moves = [
-          [-2, -1],
-          [-2, 1],
-          [-1, -2],
-          [-1, 2],
-          [1, -2],
-          [1, 2],
-          [2, -1],
-          [2, 1],
-        ];
-        for (let r = 0; r < N; r++) {
-          for (let cc = 0; cc < N; cc++) {
+        const moves = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+        for (let r = 0; r < N; r++)
+          for (let cc = 0; cc < N; cc++)
             for (const [dr, dc] of moves) {
-              const r2 = r + dr;
-              const c2 = cc + dc;
+              const r2 = r + dr, c2 = cc + dc;
               if (r2 >= 0 && r2 < N && c2 >= 0 && c2 < N)
                 addPeer(peers, cellId(r, cc), cellId(r2, c2));
             }
-          }
-        }
         break;
       }
       case "antiKing": {
-        for (let r = 0; r < N; r++) {
-          for (let cc = 0; cc < N; cc++) {
-            for (let dr = -1; dr <= 1; dr++) {
+        for (let r = 0; r < N; r++)
+          for (let cc = 0; cc < N; cc++)
+            for (let dr = -1; dr <= 1; dr++)
               for (let dc = -1; dc <= 1; dc++) {
                 if (dr === 0 && dc === 0) continue;
-                const r2 = r + dr;
-                const c2 = cc + dc;
+                const r2 = r + dr, c2 = cc + dc;
                 if (r2 >= 0 && r2 < N && c2 >= 0 && c2 < N)
                   addPeer(peers, cellId(r, cc), cellId(r2, c2));
               }
-            }
-          }
-        }
         break;
       }
       case "parity": {
         const id = cellId(c.pos.r, c.pos.c);
-        let mask = 0;
-        if (c.parity === "even") mask = BIT(2) | BIT(4) | BIT(6) | BIT(8);
-        else mask = BIT(1) | BIT(3) | BIT(5) | BIT(7) | BIT(9);
+        const mask = c.parity === "even"
+          ? BIT(2)|BIT(4)|BIT(6)|BIT(8)
+          : BIT(1)|BIT(3)|BIT(5)|BIT(7)|BIT(9);
         initialCandidates[id] &= mask;
         break;
       }
       case "cage": {
         const cellsArr = c.cells.map((p) => cellId(p.r, p.c));
         for (let i = 0; i < cellsArr.length; i++)
-          for (let j = i + 1; j < cellsArr.length; j++) addPeer(peers, cellsArr[i], cellsArr[j]);
+          for (let j = i + 1; j < cellsArr.length; j++)
+            addPeer(peers, cellsArr[i], cellsArr[j]);
         const idx = cages.length;
-        cages.push({ id: c.id, cells: cellsArr, sum: c.sum });
+        const entry: CageEntry = { id: c.id, cells: cellsArr, sum: c.sum };
+        // Precompute combination masks for cages with a sum
+        if (c.sum !== undefined) {
+          const combMasks = cageComboMasks(cellsArr.length, c.sum, FULL_MASK);
+          if (combMasks) {
+            entry.combMask = combMasks;
+            // Apply combo masks to initialCandidates
+            // (positions are unordered, so OR all slot masks together for each cell)
+            const allAllowed = combMasks.reduce((acc, m) => acc | m, 0);
+            for (const cid of cellsArr) initialCandidates[cid] &= allAllowed;
+          }
+        }
+        cages.push(entry);
         for (const cid of cellsArr) {
           if (!cagesByCell.has(cid)) cagesByCell.set(cid, []);
           cagesByCell.get(cid)!.push(idx);
@@ -186,8 +244,6 @@ function prepare(constraints: Constraint[]): Prepared | { error: string } {
           const cid = cellsArr[i];
           if (!thermosByCell.has(cid)) thermosByCell.set(cid, []);
           thermosByCell.get(cid)!.push({ thermoIdx: idx, pos: i });
-          // Minimum/maximum imposed by position
-          // Cell at position i must be at least i+1 (smallest path = 1,2,...) and at most 9 - (len-1-i)
           let mask = 0;
           for (let d = i + 1; d <= 9 - (cellsArr.length - 1 - i); d++) mask |= BIT(d);
           initialCandidates[cid] &= mask;
@@ -222,30 +278,14 @@ function prepare(constraints: Constraint[]): Prepared | { error: string } {
     }
   }
 
-  return {
-    peers,
-    initialCandidates,
-    pairsByCell,
-    thermos,
-    thermosByCell,
-    cages,
-    cagesByCell,
-    arrows,
-    arrowsByCell,
-  };
+  return { peers, initialCandidates, pairsByCell, thermos, thermosByCell, cages, cagesByCell, arrows, arrowsByCell };
 }
 
 function allowedForPair(pc: PairConstraint): { aMask: number; bMask: number } {
-  let aMask = 0;
-  let bMask = 0;
-  for (let da = 1; da <= 9; da++) {
-    for (let db = 1; db <= 9; db++) {
-      if (pairOk(pc, da, db)) {
-        aMask |= BIT(da);
-        bMask |= BIT(db);
-      }
-    }
-  }
+  let aMask = 0, bMask = 0;
+  for (let da = 1; da <= 9; da++)
+    for (let db = 1; db <= 9; db++)
+      if (pairOk(pc, da, db)) { aMask |= BIT(da); bMask |= BIT(db); }
   return { aMask, bMask };
 }
 
@@ -276,10 +316,9 @@ export function solvePuzzle(constraints: Constraint[]): SolveResult {
   const prepared = prepare(constraints);
   if ("error" in prepared) return { state: "none" };
 
-  const candidates = prepared.initialCandidates.slice();
-  const grid = new Array(N * N).fill(0);
+  const candidates = new Int32Array(prepared.initialCandidates);
+  const grid = new Int32Array(N * N);
 
-  // Apply forced singletons from initial candidates
   const queue: number[] = [];
   for (let i = 0; i < N * N; i++) {
     if (candidates[i] === 0) return { state: "none" };
@@ -287,38 +326,35 @@ export function solvePuzzle(constraints: Constraint[]): SolveResult {
   }
   if (!propagateQueue(queue, candidates, grid, prepared)) return { state: "none" };
 
-  const solutions: number[][] = [];
+  const solutions: Int32Array[] = [];
   search(candidates, grid, prepared, solutions, 2);
 
   if (solutions.length === 0) return { state: "none" };
   if (solutions.length === 1) return { state: "unique", solution: toGrid(solutions[0]) };
-  return {
-    state: "multiple",
-    solutions: [toGrid(solutions[0]), toGrid(solutions[1])],
-  };
+  return { state: "multiple", solutions: [toGrid(solutions[0]), toGrid(solutions[1])] };
 }
 
-function toGrid(flat: number[]): Grid {
+function toGrid(flat: Int32Array): Grid {
   const out: Grid = [];
-  for (let r = 0; r < N; r++) out.push(flat.slice(r * N, (r + 1) * N));
+  for (let r = 0; r < N; r++) out.push(Array.from(flat.slice(r * N, (r + 1) * N)));
   return out;
 }
 
 function search(
-  candidates: number[],
-  grid: number[],
+  candidates: Int32Array,
+  grid: Int32Array,
   prepared: Prepared,
-  solutions: number[][],
+  solutions: Int32Array[],
   maxSolutions: number,
 ): void {
   if (solutions.length >= maxSolutions) return;
 
-  // Find MRV cell
   let bestCell = -1;
   let bestCount = 10;
   for (let i = 0; i < N * N; i++) {
     if (grid[i] !== 0) continue;
     const cnt = bitCount(candidates[i]);
+    if (cnt === 0) return;
     if (cnt < bestCount) {
       bestCount = cnt;
       bestCell = i;
@@ -327,32 +363,29 @@ function search(
   }
 
   if (bestCell === -1) {
-    // All cells filled; verify cages with sums and arrows
-    if (verifyComplete(grid, prepared)) {
-      solutions.push(grid.slice());
-    }
+    if (verifyComplete(grid, prepared)) solutions.push(grid.slice());
     return;
   }
-  if (bestCount === 0) return;
+
+  const cSnap = new Int32Array(candidates);
+  const gSnap = new Int32Array(grid);
 
   const choices = digitsFromMask(candidates[bestCell]);
   for (const d of choices) {
-    const cSnap = candidates.slice();
-    const gSnap = grid.slice();
     if (assign(bestCell, d, candidates, grid, prepared)) {
       search(candidates, grid, prepared, solutions, maxSolutions);
       if (solutions.length >= maxSolutions) return;
     }
-    candidates.splice(0, candidates.length, ...cSnap);
-    grid.splice(0, grid.length, ...gSnap);
+    candidates.set(cSnap);
+    grid.set(gSnap);
   }
 }
 
 function assign(
   cell: number,
   d: number,
-  candidates: number[],
-  grid: number[],
+  candidates: Int32Array,
+  grid: Int32Array,
   prepared: Prepared,
 ): boolean {
   candidates[cell] = BIT(d);
@@ -361,18 +394,19 @@ function assign(
 
 function propagateQueue(
   queue: number[],
-  candidates: number[],
-  grid: number[],
+  candidates: Int32Array,
+  grid: Int32Array,
   prepared: Prepared,
 ): boolean {
-  while (queue.length) {
-    const cell = queue.shift()!;
+  let head = 0;
+  while (head < queue.length) {
+    const cell = queue[head++];
     if (bitCount(candidates[cell]) !== 1) continue;
     if (grid[cell] !== 0) continue;
     const d = lowestDigit(candidates[cell]);
     grid[cell] = d;
 
-    // Peer pruning: remove d from peers
+    // Peer pruning
     const peerRow = prepared.peers[cell];
     for (let i = 0; i < N * N; i++) {
       if (peerRow[i] === 0) continue;
@@ -406,14 +440,12 @@ function propagateQueue(
     if (thEntries) {
       for (const { thermoIdx, pos } of thEntries) {
         const t = prepared.thermos[thermoIdx];
-        // Each later cell must be > d
         for (let i = pos + 1; i < t.cells.length; i++) {
           const c2 = t.cells[i];
           if (grid[c2] !== 0) {
             if (grid[c2] <= d) return false;
             continue;
           }
-          // Must be >= d + (i - pos)
           const minD = d + (i - pos);
           if (minD > 9) return false;
           let mask = 0;
@@ -423,7 +455,6 @@ function propagateQueue(
           if (candidates[c2] === 0) return false;
           if (before !== candidates[c2] && bitCount(candidates[c2]) === 1) queue.push(c2);
         }
-        // Each earlier cell must be < d
         for (let i = 0; i < pos; i++) {
           const c2 = t.cells[i];
           if (grid[c2] !== 0) {
@@ -459,13 +490,9 @@ function propagateQueue(
           } else {
             const cands = candidates[cid];
             if (cands === 0) return false;
-            let lo = 0;
-            let hi = 0;
+            let lo = 0, hi = 0;
             for (let v = 1; v <= 9; v++) {
-              if (HAS(cands, v)) {
-                if (lo === 0) lo = v;
-                hi = v;
-              }
+              if (HAS(cands, v)) { if (lo === 0) lo = v; hi = v; }
             }
             minPossible += lo;
             maxPossible += hi;
@@ -475,23 +502,19 @@ function propagateQueue(
           if (sumSoFar !== cage.sum) return false;
         } else {
           const target = cage.sum - sumSoFar;
-          if (target < minPossible) return false;
-          if (target > maxPossible) return false;
+          if (target < minPossible || target > maxPossible) return false;
         }
       }
     }
 
-    // Arrows: only check fully-assigned
+    // Arrows: check when fully assigned
     const arrIdxs = prepared.arrowsByCell.get(cell);
     if (arrIdxs) {
       for (const idx of arrIdxs) {
         const a = prepared.arrows[idx];
         const allCells = [...a.bulb, ...a.path];
         let allFilled = true;
-        for (const cid of allCells) if (grid[cid] === 0) {
-          allFilled = false;
-          break;
-        }
+        for (const cid of allCells) if (grid[cid] === 0) { allFilled = false; break; }
         if (allFilled) {
           let bulbVal = 0;
           for (const cid of a.bulb) bulbVal = bulbVal * 10 + grid[cid];
@@ -505,12 +528,7 @@ function propagateQueue(
   return true;
 }
 
-function lowestDigit(mask: number): number {
-  for (let d = 1; d <= 9; d++) if (HAS(mask, d)) return d;
-  return 0;
-}
-
-function verifyComplete(grid: number[], prepared: Prepared): boolean {
+function verifyComplete(grid: Int32Array, prepared: Prepared): boolean {
   for (const cage of prepared.cages) {
     if (cage.sum === undefined) continue;
     let s = 0;
