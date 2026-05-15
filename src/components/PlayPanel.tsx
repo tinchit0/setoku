@@ -61,12 +61,12 @@ export function PlayPanel() {
   return (
     <>
       <div>
-        <h2>Modo juego</h2>
+        <h2>Play mode</h2>
         <p style={{ fontSize: 13, color: "var(--text-dim)", margin: "8px 0" }}>
-          Selecciona celdas (clic / flechas) e introduce dígitos. Atajos:
-          <br />· dígito = valor
-          <br />· <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + dígito = marca de esquina
-          <br />· <kbd>Shift</kbd> + dígito = marca central
+          Select cells (click/arrows) and enter digits. Shortcuts:
+          <br />· digit = value
+          <br />· <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + digit = corner mark
+          <br />· <kbd>Shift</kbd> + digit = center mark
         </p>
       </div>
 
@@ -76,19 +76,19 @@ export function PlayPanel() {
             className={pencilMode === "digit" ? "active" : ""}
             onClick={() => setPencilMode("digit")}
           >
-            Dígito
+            Digit
           </button>
           <button
             className={pencilMode === "corner" ? "active" : ""}
             onClick={() => setPencilMode("corner")}
           >
-            Esquina
+            Corner
           </button>
           <button
             className={pencilMode === "center" ? "active" : ""}
             onClick={() => setPencilMode("center")}
           >
-            Centro
+            Center
           </button>
         </div>
         <div className="digit-pad">
@@ -105,22 +105,22 @@ export function PlayPanel() {
 
       <div className="status-panel">
         <div className="status-line">
-          <span style={{ color: "var(--text-dim)" }}>Progreso</span>
+          <span style={{ color: "var(--text-dim)" }}>Progress</span>
           {solveStatus.state === "unique" ? (
             complete && correct ? (
-              <span className="status-tag ok">¡Resuelto!</span>
+              <span className="status-tag ok">Solved!</span>
             ) : complete && !correct ? (
-              <span className="status-tag err">Hay errores</span>
+              <span className="status-tag err">Has errors</span>
             ) : !correct ? (
-              <span className="status-tag warn">Errores en celdas</span>
+              <span className="status-tag warn">Errors in cells</span>
             ) : (
-              <span className="status-tag dim">En curso</span>
+              <span className="status-tag dim">In progress</span>
             )
           ) : (
             <span className="status-tag dim">—</span>
           )}
         </div>
-        <button onClick={clearAllEntries}>Limpiar todo</button>
+        <button onClick={clearAllEntries}>Clear all</button>
       </div>
     </>
   );

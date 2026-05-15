@@ -25,29 +25,29 @@ export function StatusPanel() {
   switch (status.state) {
     case "idle":
       tag = { text: "—", cls: "dim" };
-      detail = "Añade restricciones para evaluar.";
+      detail = "Add constraints to evaluate.";
       break;
     case "solving":
-      tag = { text: "Calculando…", cls: "warn" };
+      tag = { text: "Solving...", cls: "warn" };
       break;
     case "none":
-      tag = { text: "Sin solución", cls: "err" };
-      detail = "Las restricciones se contradicen.";
+      tag = { text: "No solution", cls: "err" };
+      detail = "Constraints contradict.";
       break;
     case "unique":
-      tag = { text: "Única ✓", cls: "ok" };
-      detail = "El puzzle es jugable.";
+      tag = { text: "Unique ✓", cls: "ok" };
+      detail = "Puzzle is playable.";
       break;
     case "multiple":
-      tag = { text: "Múltiples", cls: "warn" };
-      detail = `${diffCount} celda${diffCount !== 1 ? "s" : ""} difieren entre las dos soluciones encontradas.`;
+      tag = { text: "Multiple", cls: "warn" };
+      detail = `${diffCount} cell${diffCount !== 1 ? "s" : ""} differ between the two solutions found.`;
       break;
   }
 
   return (
     <div className="status-panel">
       <div className="status-line">
-        <span style={{ color: "var(--text-dim)" }}>Solución</span>
+        <span style={{ color: "var(--text-dim)" }}>Solution</span>
         <span className={`status-tag ${tag.cls}`}>{tag.text}</span>
       </div>
       {detail && <div style={{ fontSize: 12, color: "var(--text-dim)" }}>{detail}</div>}
@@ -58,9 +58,9 @@ export function StatusPanel() {
             checked={showSolution}
             onChange={(e) => setShowSolution(e.target.checked)}
           />
-          Mostrar solución (fantasma)
+          Show solution (ghost)
           {status.state === "multiple" && (
-            <span style={{ color: "var(--text-dim)" }}>· una de varias</span>
+            <span style={{ color: "var(--text-dim)" }}>· one of several</span>
           )}
         </label>
       )}
@@ -71,7 +71,7 @@ export function StatusPanel() {
             checked={showDiff}
             onChange={(e) => setShowDiff(e.target.checked)}
           />
-          Mostrar celdas sin determinar
+          Show undetermined cells
         </label>
       )}
     </div>

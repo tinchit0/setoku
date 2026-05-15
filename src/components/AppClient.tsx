@@ -261,7 +261,7 @@ export default function AppClient() {
               className={mode === "build" ? "active" : ""}
               onClick={() => setMode("build")}
             >
-              Constructor
+              Builder
             </button>
             <button
               className={mode === "play" ? "active" : ""}
@@ -269,18 +269,18 @@ export default function AppClient() {
               disabled={solveStatus.state !== "unique"}
               title={
                 solveStatus.state !== "unique"
-                  ? "Necesita una solución única para jugar"
-                  : "Jugar el puzzle"
+                  ? "Needs a unique solution to play"
+                  : "Play the puzzle"
               }
             >
-              Jugar
+              Play
             </button>
           </div>
         </div>
         <SaveLoadBar />
         <button
           onClick={() => setHelpOpen(true)}
-          title="Ayuda sobre las restricciones (también: ?)"
+          title="Constraint help (also: ?)"
           style={{ flexShrink: 0, fontWeight: 700, padding: "6px 11px" }}
         >
           ?

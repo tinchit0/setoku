@@ -17,7 +17,7 @@ export function SaveLoadBar() {
     try {
       setPuzzles(await api.list());
     } catch (e) {
-      setError("No se pudo conectar con el backend");
+      setError("Could not connect to backend");
     }
   };
 
@@ -36,12 +36,12 @@ export function SaveLoadBar() {
         });
         setCurrentId(saved.id);
       } else {
-        const saved = await api.create(title || "Sin título", "", constraints);
+        const saved = await api.create(title || "Untitled", "", constraints);
         setCurrentId(saved.id);
       }
       await refresh();
     } catch (e) {
-      setError("Error al guardar");
+      setError("Error saving");
     } finally {
       setBusy(false);
     }
@@ -56,7 +56,7 @@ export function SaveLoadBar() {
       setCurrentId(p.id);
       setTitle(p.title);
     } catch (e) {
-      setError("Error al cargar");
+      setError("Error loading");
     } finally {
       setBusy(false);
     }
@@ -71,14 +71,14 @@ export function SaveLoadBar() {
   return (
     <div className="save-load-bar">
       <input
-        placeholder="Título"
+        placeholder="Title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
       />
       <button onClick={onSave} disabled={busy} className="primary">
         {currentId !== null ? "💾" : "💾+"}
       </button>
-      <button onClick={onNew} title="Nuevo puzzle">✚</button>
+      <button onClick={onNew} title="New puzzle">✚</button>
       <select
         value={currentId ?? ""}
         onChange={(e) => {
@@ -86,7 +86,7 @@ export function SaveLoadBar() {
           if (v) onLoad(Number(v));
         }}
       >
-        <option value="">Cargar…</option>
+        <option value="">Load…</option>
         {puzzles.map((p) => (
           <option key={p.id} value={p.id}>
             {p.title}

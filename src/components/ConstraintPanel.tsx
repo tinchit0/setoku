@@ -25,14 +25,14 @@ export function ConstraintPanel() {
   );
 
   const statusLabel = draft.bulb
-    ? "● FLECHA · FASE 2"
+    ? "● ARROW · PHASE 2"
     : selected.length === 0
-    ? "sin selección"
-    : `${selected.length} celda${selected.length !== 1 ? "s" : ""} seleccionada${selected.length !== 1 ? "s" : ""}`;
+    ? "no selection"
+    : `${selected.length} cell${selected.length !== 1 ? "s" : ""} selected`;
 
   const statusMsg = draft.bulb
-    ? `bulbo: ${draft.bulb.length} celda${draft.bulb.length !== 1 ? "s" : ""}. Selecciona trayecto y pulsa A`
-    : "selecciona celdas y usa los atajos";
+    ? `bulb: ${draft.bulb.length} cell${draft.bulb.length !== 1 ? "s" : ""}. Select path and press A`
+    : "select cells and use shortcuts";
 
   return (
     <>
@@ -44,38 +44,38 @@ export function ConstraintPanel() {
 
       {/* Keyboard shortcut reference */}
       <div>
-        <h2>Atajos de teclado</h2>
+        <h2>Keyboard shortcuts</h2>
         <div className="shortcut-table">
           <div className="shortcut-section">
             <div className="shortcut-row">
               <span className="shortcut-keys"><kbd>↑↓←→</kbd></span>
-              <span className="shortcut-desc">mover cursor</span>
+              <span className="shortcut-desc">move cursor</span>
             </div>
             <div className="shortcut-row">
               <span className="shortcut-keys"><kbd>⇧</kbd>+<kbd>↑↓←→</kbd></span>
-              <span className="shortcut-desc">extender selección</span>
+              <span className="shortcut-desc">extend selection</span>
             </div>
             <div className="shortcut-row">
               <span className="shortcut-keys"><kbd>Esc</kbd></span>
-              <span className="shortcut-desc">cancelar / deseleccionar</span>
+              <span className="shortcut-desc">cancel / deselect</span>
             </div>
           </div>
           <div className="shortcut-sep" />
           <div className="shortcut-section">
             <div className="shortcut-row">
               <span className="shortcut-keys"><kbd>1</kbd>–<kbd>9</kbd></span>
-              <span className="shortcut-desc">fijar given</span>
+              <span className="shortcut-desc">set given</span>
             </div>
             <div className="shortcut-row">
               <span className="shortcut-keys"><kbd>Del</kbd></span>
-              <span className="shortcut-desc">borrar given</span>
+              <span className="shortcut-desc">delete given</span>
             </div>
           </div>
           <div className="shortcut-sep" />
           <div className="shortcut-section">
             <div className="shortcut-row">
               <span className="shortcut-keys"><kbd>T</kbd></span>
-              <span className="shortcut-desc">termómetro</span>
+              <span className="shortcut-desc">thermometer</span>
             </div>
             <div className="shortcut-row">
               <span className="shortcut-keys"><kbd>K</kbd></span>
@@ -83,7 +83,7 @@ export function ConstraintPanel() {
             </div>
             <div className="shortcut-row">
               <span className="shortcut-keys"><kbd>A</kbd></span>
-              <span className="shortcut-desc">flecha (2 fases)</span>
+              <span className="shortcut-desc">arrow (2 phases)</span>
             </div>
             <div className="shortcut-row">
               <span className="shortcut-keys"><kbd>W</kbd> / <kbd>B</kbd></span>
@@ -95,7 +95,7 @@ export function ConstraintPanel() {
             </div>
             <div className="shortcut-row">
               <span className="shortcut-keys"><kbd>E</kbd> / <kbd>I</kbd></span>
-              <span className="shortcut-desc">par / impar</span>
+              <span className="shortcut-desc">even / odd</span>
             </div>
           </div>
           <div className="shortcut-sep" />
@@ -106,14 +106,14 @@ export function ConstraintPanel() {
             </div>
             <div className="shortcut-row">
               <span className="shortcut-keys"><kbd>N</kbd> / <kbd>⇧N</kbd></span>
-              <span className="shortcut-desc">anti-caballo / rey</span>
+              <span className="shortcut-desc">anti-knight / king</span>
             </div>
           </div>
           <div className="shortcut-sep" />
           <div className="shortcut-section">
             <div className="shortcut-row">
               <span className="shortcut-keys"><kbd>?</kbd></span>
-              <span className="shortcut-desc">ayuda de restricciones</span>
+              <span className="shortcut-desc">constraint help</span>
             </div>
           </div>
         </div>
@@ -121,33 +121,33 @@ export function ConstraintPanel() {
 
       {/* Global constraints toggles */}
       <div>
-        <h2>Globales</h2>
+        <h2>Global</h2>
         <div className="toolbar-row" style={{ marginTop: 8 }}>
           <button
             className={has.diagMain ? "active" : ""}
             onClick={() => toggleDiagonal("main")}
-            title="D — diagonal principal"
+            title="D — main diagonal"
           >
             D · ↘
           </button>
           <button
             className={has.diagAnti ? "active" : ""}
             onClick={() => toggleDiagonal("anti")}
-            title="⇧D — diagonal anti"
+            title="⇧D — anti-diagonal"
           >
             ⇧D · ↙
           </button>
           <button
             className={has.antiKnight ? "active" : ""}
             onClick={toggleAntiKnight}
-            title="N — anti-caballo"
+            title="N — anti-knight"
           >
             N · ♞
           </button>
           <button
             className={has.antiKing ? "active" : ""}
             onClick={toggleAntiKing}
-            title="⇧N — anti-rey"
+            title="⇧N — anti-king"
           >
             ⇧N · ♚
           </button>
@@ -173,36 +173,36 @@ function ConstraintList({
       case "given":
         return `(${c.pos.r + 1},${c.pos.c + 1}) = ${c.digit}`;
       case "diagonal":
-        return c.which === "main" ? "Diagonal principal" : "Diagonal anti";
+        return c.which === "main" ? "Main diagonal" : "Anti-diagonal";
       case "cage":
-        return `${c.cells.length} celdas${c.sum !== undefined ? ` · suma ${c.sum}` : ""}`;
+        return `${c.cells.length} cells${c.sum !== undefined ? ` · sum ${c.sum}` : ""}`;
       case "thermometer":
-        return `${c.cells.length} celdas`;
+        return `${c.cells.length} cells`;
       case "arrow":
-        return `bulbo ${c.bulb.length}, ruta ${c.path.length}`;
+        return `bulb ${c.bulb.length}, path ${c.path.length}`;
       case "kropki":
-        return c.color === "white" ? "○ consecutivos" : "● ×2";
+        return c.color === "white" ? "○ consecutive" : "● ×2";
       case "xv":
-        return c.mark === "x" ? "X (suma 10)" : "V (suma 5)";
+        return c.mark === "x" ? "X (sum 10)" : "V (sum 5)";
       case "parity":
-        return `(${c.pos.r + 1},${c.pos.c + 1}) · ${c.parity === "even" ? "par" : "impar"}`;
+        return `(${c.pos.r + 1},${c.pos.c + 1}) · ${c.parity === "even" ? "even" : "odd"}`;
       case "antiKnight":
-        return "Anti-caballo";
+        return "Anti-knight";
       case "antiKing":
-        return "Anti-rey";
+        return "Anti-king";
     }
   };
   if (constraints.length === 0) {
     return (
       <div>
-        <h2>Restricciones</h2>
-        <p style={{ color: "var(--text-dim)", fontSize: 13 }}>Aún no hay restricciones.</p>
+        <h2>Constraints</h2>
+        <p style={{ color: "var(--text-dim)", fontSize: 13 }}>No constraints yet.</p>
       </div>
     );
   }
   return (
     <div>
-      <h2>Restricciones ({constraints.length})</h2>
+      <h2>Constraints ({constraints.length})</h2>
       <div className="constraint-list" style={{ marginTop: 8 }}>
         {constraints.map((c) => (
           <div key={c.id} className="constraint-row">
@@ -221,7 +221,7 @@ function ConstraintList({
                       sum: e.target.value === "" ? undefined : Number(e.target.value),
                     } as Partial<Constraint>)
                   }
-                  placeholder="suma"
+                  placeholder="sum"
                 />
               )}
               <button className="danger" onClick={() => onRemove(c.id)}>
@@ -240,12 +240,12 @@ function labelFor(c: Constraint): string {
     case "given": return "Given";
     case "diagonal": return "Diagonal";
     case "cage": return "Killer cage";
-    case "thermometer": return "Termómetro";
-    case "arrow": return "Flecha";
+    case "thermometer": return "Thermometer";
+    case "arrow": return "Arrow";
     case "kropki": return "Kropki";
     case "xv": return "XV";
-    case "parity": return "Paridad";
-    case "antiKnight": return "Anti-caballo";
-    case "antiKing": return "Anti-rey";
+    case "parity": return "Parity";
+    case "antiKnight": return "Anti-knight";
+    case "antiKing": return "Anti-king";
   }
 }

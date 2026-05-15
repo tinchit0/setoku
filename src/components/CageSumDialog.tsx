@@ -45,11 +45,11 @@ export function CageSumDialog({ cells, onConfirm, onCancel }: Props) {
         <h3>Killer cage</h3>
         {cells && (
           <p className="cage-dialog-meta">
-            {cells.length} celda{cells.length !== 1 ? "s" : ""} seleccionadas
+            {cells.length} cell{cells.length !== 1 ? "s" : ""} selected
           </p>
         )}
         <div className="field">
-          <label>Suma (opcional)</label>
+          <label>Sum (optional)</label>
           <input
             ref={inputRef}
             type="number"
@@ -59,14 +59,14 @@ export function CageSumDialog({ cells, onConfirm, onCancel }: Props) {
               if (e.key === "Enter") { e.preventDefault(); confirm(); }
               if (e.key === "Escape") { e.preventDefault(); onCancel(); }
             }}
-            placeholder="sin suma"
+            placeholder="no sum"
             min={1}
             max={45}
           />
         </div>
         <div className="cage-dialog-actions">
-          <button onClick={onCancel}>Cancelar</button>
-          <button className="primary" onClick={confirm}>Añadir jaula</button>
+          <button onClick={onCancel}>Cancel</button>
+          <button className="primary" onClick={confirm}>Add cage</button>
         </div>
       </div>
     </dialog>
